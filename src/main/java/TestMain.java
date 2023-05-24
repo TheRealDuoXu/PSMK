@@ -1,6 +1,9 @@
-import data.IRRResult;
-import data.IRRResultPrecise;
-import data.NPVResult;
+import data.session.GuestSession;
+import processing.FinancialCalculatorCore;
+import data.DAO;
+import data.results.IRRResult;
+import data.results.IRRResultPrecise;
+import data.results.NPVResult;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -120,12 +123,12 @@ public class TestMain {
 
     private static void option7() {
         session.setGuestPersistenceStatus(false);
-        println("Listo! Todo configurado " + session.userName + " persistencia: " + session.isGuestPersistenceStatus());
+        println("Listo! Todo configurado " + session.getUserName() + " persistencia: " + session.isGuestPersistenceStatus());
     }
 
     private static void option6() {
         session.setGuestPersistenceStatus(true);
-        println("Listo! Todo configurado " + session.userName + " persistencia: " + session.isGuestPersistenceStatus());
+        println("Listo! Todo configurado " + session.getUserName() + " persistencia: " + session.isGuestPersistenceStatus());
     }
 
     private static void option5(ArrayDeque<Double> cashFlow) {

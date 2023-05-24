@@ -1,3 +1,5 @@
+package processing;
+
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -44,8 +46,8 @@ public class FinancialCalculatorCore {
     public static double getIRRBolzano(ArrayDeque<Double> cashFlows) {
 //        double lowerGuessIRR, higherGuessIRR;
 //
-//        lowerGuessIRR = -Math.abs(FinancialCalculatorCore.BOLZANO_SEARCH_AMPLITUDE);
-//        higherGuessIRR = Math.abs(FinancialCalculatorCore.BOLZANO_SEARCH_AMPLITUDE);
+//        lowerGuessIRR = -Math.abs(concurrent.FinancialCalculatorCore.BOLZANO_SEARCH_AMPLITUDE);
+//        higherGuessIRR = Math.abs(concurrent.FinancialCalculatorCore.BOLZANO_SEARCH_AMPLITUDE);
 //
 //        if (NPVSharesSameSign(cashFlows, lowerGuessIRR, higherGuessIRR)) {
 //            throw new NoSuchElementException();
@@ -80,7 +82,7 @@ public class FinancialCalculatorCore {
 //    private static double findSolution(ArrayDeque<Double> cashFlows, double lowerGuessIRR, double higherGuessIRR) {
 //        double pivot = 0;
 //
-//        while (higherGuessIRR - lowerGuessIRR > FinancialCalculatorCore.BOLZANO_MIN_STEP) {
+//        while (higherGuessIRR - lowerGuessIRR > concurrent.FinancialCalculatorCore.BOLZANO_MIN_STEP) {
 //            pivot = (lowerGuessIRR + higherGuessIRR) / 2;
 //
 //            if (NPVSharesSameSign(cashFlows, lowerGuessIRR, pivot)){

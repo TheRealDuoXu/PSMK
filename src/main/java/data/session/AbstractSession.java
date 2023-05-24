@@ -1,4 +1,6 @@
-import data.Result;
+package data.session;
+
+import data.results.Result;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;

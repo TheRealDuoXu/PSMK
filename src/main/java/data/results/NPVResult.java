@@ -1,4 +1,4 @@
-package data;
+package data.results;
 
 import java.util.ArrayDeque;
 

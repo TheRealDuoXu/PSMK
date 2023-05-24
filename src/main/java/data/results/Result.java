@@ -1,4 +1,4 @@
-package data;
+package data.results;
 
 public interface Result<T> extends Comparable<Result<T>>{
     T getRawData();
