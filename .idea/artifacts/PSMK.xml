@@ -1,0 +1,10 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="PSMK">
+    <output-path>$PROJECT_DIR$/out/artifacts/PSMK</output-path>
+    <root id="archive" name="PSMK.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
+    </root>
+  </artifact>
+</component>
