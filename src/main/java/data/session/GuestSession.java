@@ -1,6 +1,6 @@
 package data.session;
 
-import data.DAO;
+import data.database.DAO;
 
 import java.time.LocalDateTime;
 import java.util.ArrayDeque;

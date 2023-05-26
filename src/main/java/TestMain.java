@@ -1,6 +1,6 @@
 import data.session.GuestSession;
 import processing.FinancialCalculatorCore;
-import data.DAO;
+import data.database.DAO;
 import data.results.IRRResult;
 import data.results.IRRResultPrecise;
 import data.results.NPVResult;
@@ -189,7 +189,7 @@ public class TestMain {
 
     private static ArrayDeque<String> initRawDataHeader() {
         ArrayDeque<String> tmp = new ArrayDeque<>();
-        tmp.add(session.userName);
+        tmp.add(session.getUserName());
         return tmp;
     }
 
