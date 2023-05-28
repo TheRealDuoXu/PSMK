@@ -10,6 +10,9 @@ import java.util.*;
 import java.util.function.Function;
 
 public abstract class InvestmentHistoricalData implements Comparable<InvestmentHistoricalData> {
+    /**
+     * Represents any kind of historical data been treated in this programme
+     */
     public final static int ARRAY_POS_TICKER = 0;
     public final static int ARRAY_POS_STOCK_EXCHANGE = 1;
     public final static int ARRAY_POS_TYPE = 2;
@@ -38,10 +41,9 @@ public abstract class InvestmentHistoricalData implements Comparable<InvestmentH
     }
 
     public abstract InvestmentHistoricalData getInstance(LinkedHashMap<PrimaryKey, Values<String>> map);
+
     @Override
-    public String toString() {
-        return "";
-    }
+    public abstract String toString();
 
     public void toCSVFile() {
         String[][] data = toArray();
@@ -81,15 +83,9 @@ public abstract class InvestmentHistoricalData implements Comparable<InvestmentH
             tmpKey = entry.getKey();
             tmpValues = entry.getValue();
 
-            strTable[i][ARRAY_POS_TICKER] = tmpKey.getData()[PRIMARY_KEY_POS_TICKER]; // Ticket
-            strTable[i][ARRAY_POS_STOCK_EXCHANGE] = tmpValues.getData()[VALUES_POS_STOCK_EXCHANGE]; // Stock_exchange
-            strTable[i][ARRAY_POS_TYPE] = tmpValues.getData()[VALUES_POS_TYPE]; // Type
-            strTable[i][ARRAY_POS_DATE] = tmpKey.getData()[PRIMARY_KEY_POS_DATE]; // Date
-            strTable[i][ARRAY_POS_OPEN] = tmpValues.getData()[VALUES_POS_OPEN]; // Open
-            strTable[i][ARRAY_POS_HIGH] = tmpValues.getData()[VALUES_POS_HIGH]; // High
-            strTable[i][ARRAY_POS_LOW] = tmpValues.getData()[VALUES_POS_LOW]; // Low
-            strTable[i][ARRAY_POS_CLOSE] = tmpValues.getData()[VALUES_POS_CLOSE]; // Close
-            strTable[i][ARRAY_POS_VOL] = tmpValues.getData()[VALUES_POS_VOL]; // Vol
+            String[] strTableRow = strTable[i];
+
+            populateStrTableRow(tmpKey, tmpValues, strTableRow);
 
             entry = it.next();
             i++;
@@ -98,11 +94,37 @@ public abstract class InvestmentHistoricalData implements Comparable<InvestmentH
         return strTable;
     }
 
+    private void populateStrTableRow(PrimaryKey tmpKey, Values<String> tmpValues, String[] nextRow) {
+        nextRow[ARRAY_POS_TICKER] = tmpKey.getData()[PRIMARY_KEY_POS_TICKER]; // Ticket
+        nextRow[ARRAY_POS_STOCK_EXCHANGE] = tmpValues.getData()[VALUES_POS_STOCK_EXCHANGE]; // Stock_exchange
+        nextRow[ARRAY_POS_TYPE] = tmpValues.getData()[VALUES_POS_TYPE]; // Type
+        nextRow[ARRAY_POS_DATE] = tmpKey.getData()[PRIMARY_KEY_POS_DATE]; // Date
+        nextRow[ARRAY_POS_OPEN] = tmpValues.getData()[VALUES_POS_OPEN]; // Open
+        nextRow[ARRAY_POS_HIGH] = tmpValues.getData()[VALUES_POS_HIGH]; // High
+        nextRow[ARRAY_POS_LOW] = tmpValues.getData()[VALUES_POS_LOW]; // Low
+        nextRow[ARRAY_POS_CLOSE] = tmpValues.getData()[VALUES_POS_CLOSE]; // Close
+        nextRow[ARRAY_POS_VOL] = tmpValues.getData()[VALUES_POS_VOL]; // Vol
+    }
+
+    public String[] toFirstRowArray() {
+        Set<Map.Entry<PrimaryKey, Values<String>>> entrySet = map.entrySet();
+        Iterator<Map.Entry<PrimaryKey, Values<String>>> it = entrySet.iterator();
+        Map.Entry<PrimaryKey, Values<String>> entry = it.next();
+
+        PrimaryKey tmpKey = entry.getKey();
+        Values<String> tmpValues = entry.getValue();
+
+        String[] firstRow = new String[tmpKey.getData().length + tmpValues.getData().length];
+
+        populateStrTableRow(tmpKey, tmpValues, firstRow);
+
+        return firstRow;
+    }
+
     @Override
     public abstract int compareTo(InvestmentHistoricalData other);
 
     public abstract boolean equals();
-    public abstract void updateDDBBOnThisObjectData();
 
     public abstract char getType();
 

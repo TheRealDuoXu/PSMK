@@ -30,7 +30,6 @@ public class RecursivePlotTask extends RecursiveTask<Double> {
 
             return spawnChildTasks();
         } else {
-
             return findSolution();
         }
     }
@@ -57,11 +56,10 @@ public class RecursivePlotTask extends RecursiveTask<Double> {
 
     private ArrayList<Future<Double>> getFutures(RecursivePlotTask[] recursivePlotTasks) {
         ArrayList<Future<Double>> futures = new ArrayList<>();
-        try (ForkJoinPool forkJoinPool = ForkJoinPool.commonPool()) {
 
-            for (RecursivePlotTask task : recursivePlotTasks) {
-                futures.add(forkJoinPool.submit(task));
-            }
+        ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+        for (RecursivePlotTask task : recursivePlotTasks) {
+            futures.add(forkJoinPool.submit(task));
         }
 
         return futures;

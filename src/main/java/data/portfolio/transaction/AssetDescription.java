@@ -1,6 +1,6 @@
 package data.portfolio.transaction;
 
-public class AssetDescription {
+public class AssetDescription implements Comparable<AssetDescription>{
     String ticker;
     String stockExchange;
     String strType;
@@ -60,5 +60,10 @@ public class AssetDescription {
 
     public void setChrType(char chrType) {
         this.chrType = chrType;
+    }
+
+    @Override
+    public int compareTo(AssetDescription other) {
+        return this.ticker.compareToIgnoreCase(other.ticker);
     }
 }

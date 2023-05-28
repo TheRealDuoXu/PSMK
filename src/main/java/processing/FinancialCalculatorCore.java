@@ -150,12 +150,10 @@ public class FinancialCalculatorCore {
      */
     public static double getPreciseIRRBolzano(ArrayDeque<Double> cashFlows) {
         Double IRR;
-        try (ForkJoinPool forkJoinPool = ForkJoinPool.commonPool()) {
-
-            IRR = forkJoinPool.invoke(new RecursivePlotTask(cashFlows, RecursivePlotTask.PRECISION_BOLZANO_INIT,
-                    RecursivePlotTask.PRECISION_BOLZANO_MAX));
-            forkJoinPool.shutdownNow();
-        }
+        ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
+        IRR = forkJoinPool.invoke(new RecursivePlotTask(cashFlows, RecursivePlotTask.PRECISION_BOLZANO_INIT,
+                RecursivePlotTask.PRECISION_BOLZANO_MAX));
+        forkJoinPool.shutdownNow();
 
         return IRRNullSafety(IRR);
     }
