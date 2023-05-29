@@ -1,7 +1,6 @@
 package data.portfolio.transaction;
 
 import data.portfolio.historical.InvestmentHistoricalData;
-import data.portfolio.transaction.TransactionPoint;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -19,14 +18,6 @@ public class TransactionCollection implements Collection<TransactionPoint<? exte
 
     public TransactionCollection(ArrayList<TransactionPoint<? extends InvestmentHistoricalData>> transactionsCollection) {
         this.transactionsCollection = transactionsCollection;
-    }
-
-    public TransactionCollection(TransactionPoint<? extends InvestmentHistoricalData>... transactionsArray) {
-
-    }
-
-    public void refreshActiveAssets() {
-
     }
 
 
@@ -47,7 +38,7 @@ public class TransactionCollection implements Collection<TransactionPoint<? exte
 
     @Override
     public Iterator<TransactionPoint<? extends InvestmentHistoricalData>> iterator() {
-        return null;
+        return transactionsCollection.iterator();
     }
 
     @Override
@@ -92,6 +83,6 @@ public class TransactionCollection implements Collection<TransactionPoint<? exte
 
     @Override
     public void clear() {
-
+        transactionsCollection.clear();
     }
 }

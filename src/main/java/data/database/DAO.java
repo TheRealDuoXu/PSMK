@@ -1,15 +1,28 @@
 package data.database;
 
+import data.portfolio.transaction.TransactionCollection;
+import data.portfolio.transaction.TransactionPoint;
+
 import java.io.*;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.UUID;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 
 public class DAO {
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/PSMK";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "root";
     private static DAO instance;
+    private static Connection con;
     private final String filePath;
 
     private DAO(String filePath) {
         this.filePath = filePath;
+        this.con = getConnection();
     }
 
     public static DAO getInstance(String filePath) {
@@ -19,6 +32,27 @@ public class DAO {
                 }
             }
         return instance;
+    }
+    private static Connection getConnection()  {
+        try{
+            Connection con = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+        }catch (SQLException e) {
+            System.out.println("Connection error: " + e);
+            //TODO
+        }
+        return con;
+    }
+
+
+
+    public static void closeConnection(Connection connection) {
+        if (connection != null) {
+            try {
+                connection.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     public void writeDataTableCSV(List<String[]> data) throws IOException {
@@ -104,5 +138,16 @@ public class DAO {
         }
     }
 
+    public TransactionCollection getAllHistoryFromPorfolio(UUID portfolioUUID) {
+        QueriesSQL sql = QueriesSQL.SELECT_TRANSACTION_HISTORY_BY_PORTFOLIO_UUID;
+
+    }
+    public TransactionCollection getAllHistoryFromPorfolio(UUID portfolioUUID, String ticker) {
+        QueriesSQL sql = QueriesSQL.SELECT_TRANSACTION_HISTORY_BY_PORTFOLIO_AND_TICKER;
+    }
+
+    public TransactionPoint getTransactionPoint(UUID portfolioUUID, String ticker, Date date){
+        QueriesSQL sql = QueriesSQL.SELECT_TRANSACTION_POINT;
+    }
 
 }
