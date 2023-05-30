@@ -1,9 +1,9 @@
-import data.session.GuestSession;
-import processing.FinancialCalculatorCore;
-import data.database.DAO;
-import data.results.IRRResult;
-import data.results.IRRResultPrecise;
-import data.results.NPVResult;
+import model.database.DAOFactory;
+import model.session.GuestSession;
+import controller.processing.FinancialCalculatorCore;
+import model.results.IRRResult;
+import model.results.IRRResultPrecise;
+import model.results.NPVResult;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
@@ -81,7 +81,7 @@ public class TestMain {
                         option7();
                         break;
                     case 8:
-                        option8(DAO.getInstance(session.getFilePath()).readDataTableCSV());
+                        option8(DAOFactory.getFileDAO(session.getFilePath()).readDataTableCSV());
                         break;
                     default:
                         println("Número no reconocido, saliendo el programa");
