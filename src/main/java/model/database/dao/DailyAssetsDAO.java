@@ -6,6 +6,7 @@ import model.database.containers.Values;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 
 class DailyAssetsDAO extends DAO {
     private static final int DAILY_ASSETS_VALUE_DATA_LENGTH = 7;
@@ -34,7 +35,7 @@ class DailyAssetsDAO extends DAO {
     }
 
     public Values<String> getOneDailyAssetByPK(DailyAssetPK primaryKey) {
-        SQLQuery sql = SQLQuery.SELECT_DAILY_ASSETS_VALUES_EXCLUDED_PK_BY_PK;
+        SQLQuery sql = SQLQuery.SELECT_DAILY_ASSETS_VALUES_BY_PKs;
         try (ResultSet resultSet = executeQuery(sql, primaryKey.getTicket(), primaryKey.getStrDate())) {
             String[] values = new String[DAILY_ASSETS_VALUE_DATA_LENGTH];
             for (int i = 0; i < DAILY_ASSETS_VALUE_DATA_LENGTH; i++) {
@@ -75,31 +76,22 @@ class DailyAssetsDAO extends DAO {
         return collectDailyAssets(bondHistoricalMap, ticker);
     }
 
+    //todo
+    public StockHistoricalMap getStockHistoricalMapBtwDates(String ticker, Date from, Date to){
+        return null;
+    }
+    //todo
+    public BondHistoricalMap getBondHistoricalMapBtwDates(String ticker, Date from, Date to){
+        return null;
+    }
+
     private <ContainerType extends InvestmentHistoricalMap> ContainerType collectDailyAssets(ContainerType container, String ticker) {
         SQLQuery sql = SQLQuery.SELECT_DAILY_ASSET_BY_TICKER;
         DailyAssetPK pk;
         DailyAssetValues values;
 
         try (ResultSet resultSet = executeQuery(sql, ticker)) {
-            ensureDataIntegrity(resultSet.getString(TYPE_POS), container.getType());
-
-            while (resultSet.next()) {
-                pk = DailyAssetPK.getInstance(
-                        resultSet.getString(TICKER_POS),
-                        resultSet.getString(DATE_POS));
-
-                values = DailyAssetValues.getInstance(
-                        resultSet.getString(STOCK_EXCHANGE_POS),
-                        resultSet.getString(TYPE_POS),
-                        resultSet.getString(OPEN_POS),
-                        resultSet.getString(HIGH_POS),
-                        resultSet.getString(LOW_POS),
-                        resultSet.getString(CLOSE_POS),
-                        resultSet.getString(VOL_POS));
-
-                container.put(pk, values);
-            }
-            return container;
+            return fillContainer(container, resultSet);
         } catch (ClassCastException e) {
             System.out.println("Error executing query: " + e);
             throw new RuntimeException(e);
@@ -108,10 +100,57 @@ class DailyAssetsDAO extends DAO {
             throw new RuntimeException(e);
         }
     }
+    private <ContainerType extends InvestmentHistoricalMap> ContainerType collectDailyAssetsBtwDates
+            (ContainerType container, String ticker, Date from, Date to) {
+        SQLQuery sql = SQLQuery.SELECT_DAILY_ASSET_BTW_DATES;
+        DailyAssetPK pk;
+        DailyAssetValues values;
 
+        try (ResultSet resultSet = executeQuery(sql, ticker, from.toString(), to.toString())) {
+            return fillContainer(container, resultSet);
+        } catch (ClassCastException e) {
+            System.out.println("Error executing query: " + e);
+            throw new RuntimeException(e);
+        } catch (SQLException e) {
+            System.out.println("Error executing query, could not get historical data: " + e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    private <ContainerType extends InvestmentHistoricalMap> ContainerType fillContainer(ContainerType container, ResultSet resultSet) throws SQLException {
+        DailyAssetPK pk;
+        DailyAssetValues values;
+        ensureDataIntegrity(resultSet.getString(TYPE_POS), container.getType());
+
+        while (resultSet.next()) {
+            pk = DailyAssetPK.getInstance(
+                    resultSet.getString(TICKER_POS),
+                    resultSet.getString(DATE_POS));
+
+            values = DailyAssetValues.getInstance(
+                    resultSet.getString(STOCK_EXCHANGE_POS),
+                    resultSet.getString(TYPE_POS),
+                    resultSet.getString(OPEN_POS),
+                    resultSet.getString(HIGH_POS),
+                    resultSet.getString(LOW_POS),
+                    resultSet.getString(CLOSE_POS),
+                    resultSet.getString(VOL_POS));
+
+            container.put(pk, values);
+        }
+        return container;
+    }
     private void ensureDataIntegrity(String assetType, AssetDescription.AssetType type) throws ClassCastException{
         if (assetType.charAt(0) != type.chr()){
             throw new ClassCastException("Asset type does not match: " + assetType + " vs " + type.name());
         }
+    }
+
+    public void insertDailyAssetFromCSV(){
+
+    }
+
+    public void insertDailyAssetFromDirectory(){
+
     }
 }

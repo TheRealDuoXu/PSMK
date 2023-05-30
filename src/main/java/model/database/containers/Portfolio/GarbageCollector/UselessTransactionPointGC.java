@@ -1,4 +1,4 @@
-package model.database.containers.Portfolio;
+package model.database.containers.Portfolio.GarbageCollector;
 
 public class UselessTransactionPointGC {
     /**

@@ -3,6 +3,8 @@ package model.database.dao;
 import model.database.SQLQuery;
 
 import java.sql.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 
 public abstract class DAO implements AutoCloseable{
     protected static final String DB_URL = "jdbc:mysql://localhost:3306/PSMK";
@@ -26,6 +28,25 @@ public abstract class DAO implements AutoCloseable{
     }
 
     protected ResultSet executeQuery(SQLQuery query, String... values) {
+        PreparedStatement preparedStatement = null;
+        ResultSet resultSet = null;
+
+        try {
+            query.parseValuesIntoSql(values);
+            preparedStatement = con.prepareStatement(query.toString());
+            resultSet = preparedStatement.executeQuery();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            //TODO
+        } finally {
+            closeResultSet(resultSet);
+            closePreparedStatement(preparedStatement);
+        }
+
+        return resultSet;
+    }
+    protected ResultSet executeQuery(SQLQuery query, SimpleDateFormat dateFormat, String[] values, String[] dates) {
+        //todo
         PreparedStatement preparedStatement = null;
         ResultSet resultSet = null;
 

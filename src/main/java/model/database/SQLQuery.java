@@ -4,6 +4,7 @@ public enum SQLQuery {
     SELECT_FIRST_ASSET_MATCH_TICKER("select Ticker, Stock_exchange, Type from " + SQLTable.DAILY_ASSETS + " " +
             "where Ticker = '?' limit 1", 1),
     SELECT_DAILY_ASSET_BY_TICKER("select * from DailyAssets where Ticker ='?'", 1),
+    SELECT_DAILY_ASSET_BTW_DATES("select * from DailyAssets where Ticker = '?' and Date between '?' and '?'", 3),
     SELECT_TRANSACTION_REMAINDER_BY_PORTFOLIO_UUID("select * from " + SQLTable.TRANSACTION_REMAINDER + " " +
             "where FK_UUID_Portfolio = '?'", 1),
     SELECT_TRANSACTION_HISTORY_BY_PORTFOLIO_UUID("select * from " + SQLTable.TRANSACTIONS + " " +
@@ -15,10 +16,12 @@ public enum SQLQuery {
     SELECT_USER_BY_LOGIN("select * from " + SQLTable.USER + " where login = '?'", 1),
     SELECT_PORTFOLIO_BY_USER_UUID("select * from " + SQLTable.PORTFOLIO + " " +
             "where FK_UUID_user = '?'", 1),
-    SELECT_DAILY_ASSETS_VALUES_EXCLUDED_PK_BY_PK("select Stock_exchange, Type, Open, High, Low, Close, Vol " +
+    SELECT_DAILY_ASSETS_VALUES_BY_PKs("select Stock_exchange, Type, Open, High, Low, Close, Vol " +
             "from DailyAssets where Ticker='?' and Date='?'", 2),
 
-    INSERT_INTO_USER("insert into " + SQLTable.USER + "(UUID, login, password) values ('?', '?', '?')", 3);
+    INSERT_INTO_USER("insert into " + SQLTable.USER + "(UUID, login, password) values ('?', '?', '?')", 3),
+    INSERT_DAILY_ASSET("insert into DailyAssets(Ticker, Stock_exchange, Type, Date, Open, High, Low, Close, Vol) " +
+            "values ('?','?','?','?','?','?','?','?','?')", 9);
 
     final String rawSQL;
     private String parsedSQL;

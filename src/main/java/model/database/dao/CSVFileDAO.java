@@ -1,8 +1,15 @@
 package model.database.dao;
 
 import java.io.*;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import model.database.SQLQuery;
 
 public class CSVFileDAO extends DAO {
     protected static final String DEFAULT_FILEPATH = "./default output.csv";
@@ -122,5 +129,24 @@ public class CSVFileDAO extends DAO {
         } else {
             System.out.println("El archivo CSV no existe.");
         }
+    }
+    public List<String> getCSVInDir(String workingDir) {
+        List<String> filePaths = new ArrayList<>();
+
+        File directory = new File(workingDir);
+        File[] files = directory.listFiles();
+
+        if (files != null) {
+            for (File file : files) {
+                if (file.isFile() && file.getName().endsWith(".csv")) {
+                    filePaths.add(file.getAbsolutePath());
+                }
+            }
+        }
+        return filePaths;
+    }
+
+    public void insertAllCSVFiles(String absPath, String stockExchange, char assetType) {
+
     }
 }
