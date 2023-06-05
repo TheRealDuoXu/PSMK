@@ -1,15 +1,22 @@
 package model.database.containers.DailyAssets;
 
 import model.database.containers.Description;
+import model.database.containers.Inmutable;
 
+/**
+ * Describes an asset, does not contain time data as it is contained in the maps as PK
+ * <p>
+ * This is an inmutable object, it's fields are all final, and shall not be modified by
+ * the user
+ */
+@Inmutable
 public class AssetDescription implements Comparable<AssetDescription>, Description {
     public static final int NUMBER_OF_PARAMETERS = 3;
-    String ticker;
-    String stockExchange;
-    String strType;
-    char chrType;
-
-    AssetType assetType;
+    final String ticker;
+    final String stockExchange;
+    final String strType;
+    final char chrType;
+    final AssetType assetType;
 
     public AssetDescription(String ticker, String stockExchange, char chrType) {
         this.ticker = ticker;
@@ -19,7 +26,7 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
         this.assetType = parseAssetType(chrType);
     }
 
-    public AssetDescription(String[] orderedStrings){
+    public AssetDescription(String[] orderedStrings) {
         this.ticker = orderedStrings[0];
         this.stockExchange = orderedStrings[1];
         this.chrType = orderedStrings[2].toUpperCase().charAt(0);
@@ -29,11 +36,18 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
 
     @Override
     public String describe() {
-        return null;
+        return "ticker: " + ticker + "\n" +
+                "stock exchange: " + stockExchange + "\n" +
+                "asset type: " + strType + "\n";
     }
 
     @Override
-    public String[] toArray() {
+    public String shortDescribe() {
+        return "ticker: " + ticker;
+    }
+
+    @Override
+    public String[] toArrayDescription() {
         return new String[0];
     }
 
@@ -42,7 +56,8 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
         CURRENCY("Currency", 'C'), CRYPTO("Crypto", 'Y');
         final String name;
         final char chr;
-        AssetType(String name, char chr){
+
+        AssetType(String name, char chr) {
             this.name = name;
             this.chr = chr;
         }
@@ -51,6 +66,7 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
             return chr;
         }
     }
+
     private AssetType parseAssetType(char chrType) {
         switch (chrType) {
             case 'S':
@@ -88,15 +104,19 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
     public String getTicker() {
         return ticker;
     }
+
     public String getStockExchange() {
         return stockExchange;
     }
+
     public String getStrType() {
         return strType;
     }
+
     public char getChrType() {
         return chrType;
     }
+
     public AssetType getAssetType() {
         return assetType;
     }

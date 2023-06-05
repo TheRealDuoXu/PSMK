@@ -10,12 +10,15 @@ public class DailyAssetPK extends PrimaryKey implements Comparable<DailyAssetPK>
     private static final int NUMBER_OF_FIELDS_IN_PRIMARY_KEY = 2;
     public static final int COMPARISON_MODE_ORDER_BY_DATE = 0;
     public static final int COMPARISON_MODE_ORDER_BY_TICKET = 1;
+    public static final int FIELD_TICKET_POS = 0;
+    public static final int FIELD_DATE_POS = 1;
     private int currentComparisonMode;
 
     private DailyAssetPK(String[] data) {
         super(data);
         currentComparisonMode = COMPARISON_MODE_ORDER_BY_DATE;
     }
+    //TODO make this method check for data integrity
     public static DailyAssetPK getInstance(String ...data) {
         if (data.length == NUMBER_OF_FIELDS_IN_PRIMARY_KEY) {
             return new DailyAssetPK(data);
@@ -25,14 +28,14 @@ public class DailyAssetPK extends PrimaryKey implements Comparable<DailyAssetPK>
     }
 
     public String getTicket() {
-        return data[0];
+        return data[FIELD_TICKET_POS];
     }
 
     public String getStrDate() {
-        return data[1];
+        return data[FIELD_DATE_POS];
     }
     public Date getDate(){
-        return parseDate(data[1]);
+        return parseDate(data[FIELD_DATE_POS]);
     }
 
     public void setCurrentComparisonMode(int newComparisonMode) {
@@ -75,15 +78,6 @@ public class DailyAssetPK extends PrimaryKey implements Comparable<DailyAssetPK>
         String thisTicket = this.getTicket();
 
         return thisTicket.compareTo(otherTicket);
-    }
-
-    private Date parseDate(String dateString) {
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        try {
-            return dateFormat.parse(dateString);
-        } catch (ParseException e) {
-            throw new IllegalArgumentException("Invalid date format: " + dateString);
-        }
     }
 
     private void checkClassCastSafety(Object other) throws ClassCastException {

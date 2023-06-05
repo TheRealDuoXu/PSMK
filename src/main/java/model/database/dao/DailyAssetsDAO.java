@@ -3,11 +3,11 @@ package model.database.dao;
 import model.database.SQLQuery;
 import model.database.containers.DailyAssets.*;
 import model.database.containers.Values;
+import model.session.UninstallExclusive;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
-
 class DailyAssetsDAO extends DAO {
     private static final int DAILY_ASSETS_VALUE_DATA_LENGTH = 7;
     private static final int TICKER_POS = 0;
@@ -26,7 +26,7 @@ class DailyAssetsDAO extends DAO {
     }
 
     static DailyAssetsDAO getInstance() {
-        synchronized (CSVFileDAO.class) {
+        synchronized (DailyAssetsDAO.class) {
             if (instance == null) {
                 instance = new DailyAssetsDAO();
             }
@@ -76,13 +76,13 @@ class DailyAssetsDAO extends DAO {
         return collectDailyAssets(bondHistoricalMap, ticker);
     }
 
-    //todo
     public StockHistoricalMap getStockHistoricalMapBtwDates(String ticker, Date from, Date to){
-        return null;
+        StockHistoricalMap stockHistoricalMap = new StockHistoricalMap();
+        return collectDailyAssetsBtwDates(stockHistoricalMap, ticker, from, to);
     }
-    //todo
     public BondHistoricalMap getBondHistoricalMapBtwDates(String ticker, Date from, Date to){
-        return null;
+        BondHistoricalMap bondHistoricalMap = new BondHistoricalMap();
+        return collectDailyAssetsBtwDates(bondHistoricalMap, ticker, from, to);
     }
 
     private <ContainerType extends InvestmentHistoricalMap> ContainerType collectDailyAssets(ContainerType container, String ticker) {

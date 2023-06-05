@@ -23,7 +23,7 @@ public class StockHistoricalMap extends InvestmentHistoricalMap {
 
     /**
      * @param other the object to be compared. 
-     * @return
+     * @return the order
      */
     @Override
     public int compareTo(InvestmentHistoricalMap other) {
@@ -36,7 +36,7 @@ public class StockHistoricalMap extends InvestmentHistoricalMap {
     }
 
     /**
-     * @return 
+     * @return AssetType enum object describing the asset type
      */
     @Override
     public AssetDescription.AssetType getType() {

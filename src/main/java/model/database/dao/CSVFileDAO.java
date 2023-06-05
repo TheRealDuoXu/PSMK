@@ -1,21 +1,14 @@
 package model.database.dao;
 
 import java.io.*;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import model.database.SQLQuery;
 
 public class CSVFileDAO extends DAO {
     protected static final String DEFAULT_FILEPATH = "./default output.csv";
     //    CSVFileDAO does not compete with other DAO objects, as it targets a File, and not the DDBB
     private static CSVFileDAO instance;
-    private String filePath;
+    private final String filePath;
 
     private CSVFileDAO() {
         this.filePath = DEFAULT_FILEPATH;
@@ -57,7 +50,7 @@ public class CSVFileDAO extends DAO {
                 writer.newLine();
             }
         } catch (IOException e) {
-            System.out.println(e.toString());
+            System.out.println(e);
             //TODO
         }
         System.out.println("Escritura exitosa");
@@ -73,7 +66,7 @@ public class CSVFileDAO extends DAO {
             sb.deleteCharAt(sb.length() - 1);
             writer.println(sb);
         } catch (IOException e) {
-            System.out.println(e.toString());
+            System.out.println(e);
             //TODO
         }
         System.out.println("Escritura exitosa");
@@ -88,7 +81,7 @@ public class CSVFileDAO extends DAO {
                 data.add(row);
             }
         } catch (IOException e) {
-            System.out.println(e.toString());
+            System.out.println(e);
             //TODO
         }
         return data;
@@ -101,7 +94,7 @@ public class CSVFileDAO extends DAO {
                 return line.split(",");
             }
         } catch (IOException e) {
-            System.out.println(e.toString());
+            System.out.println(e);
             //TODO
         }
         throw new IOException("Could not read");
