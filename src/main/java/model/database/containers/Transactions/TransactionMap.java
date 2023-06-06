@@ -5,8 +5,6 @@ import java.util.*;
 public class TransactionMap implements Map<TransactionPK, TransactionValues> {
 
     private LinkedHashMap<TransactionPK, TransactionValues> transactionRecord;
-    private TransactionDescription transactionDescription;
-
     public TransactionMap(LinkedHashMap<TransactionPK, TransactionValues> transactionRecord) {
         this.transactionRecord = transactionRecord;
     }
@@ -17,8 +15,9 @@ public class TransactionMap implements Map<TransactionPK, TransactionValues> {
         this.transactionRecord.put(pk, values);
     }
 
+    //TODO
     public TransactionDescription getTransactionDescription(){
-        return null; //TODO
+        return null;
     }
     @Override
     public int size() {
@@ -83,12 +82,12 @@ public class TransactionMap implements Map<TransactionPK, TransactionValues> {
         LinkedHashSet<TransactionPoint> transactionPoints = new LinkedHashSet<>();
         for (Entry<TransactionPK, TransactionValues> entry:
         transactionRecord.entrySet()){
-            transactionPoints.add(new TransactionPoint(entry.getKey(), entry.getValue(), transactionDescription));
+            transactionPoints.add(new TransactionPoint(entry.getKey(), entry.getValue()));
         }
         return transactionPoints;
     }
 
-    public class TransactionPoint implements Entry<TransactionPK, TransactionValues> {
+    public static class TransactionPoint implements Entry<TransactionPK, TransactionValues> {
         private final TransactionPK key;
         private TransactionValues values;
         private TransactionDescription transactionDescription;
