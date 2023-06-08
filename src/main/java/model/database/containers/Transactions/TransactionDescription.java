@@ -17,13 +17,15 @@ public class TransactionDescription implements Comparable<TransactionDescription
     public static final int NUMBER_OF_PARAMETERS = AssetDescription.NUMBER_OF_PARAMETERS + 2;
     final AssetDescription assetDescription;
     final Date recordInitialDate, recordFinalDate;
-    final float amount;
+    final float totalVolume;
+    final float remainder;
 
-    public TransactionDescription(AssetDescription assetDescription, Date recordInitialDate, Date recordFinalDate, float amount) {
+    public TransactionDescription(AssetDescription assetDescription, Date recordInitialDate, Date recordFinalDate, float totalVolume, float remainder) {
         this.assetDescription = assetDescription;
         this.recordInitialDate = recordInitialDate;
         this.recordFinalDate = recordFinalDate;
-        this.amount = amount;
+        this.totalVolume = totalVolume;
+        this.remainder = remainder;
     }
 
     /**
@@ -46,7 +48,7 @@ public class TransactionDescription implements Comparable<TransactionDescription
         return  "asset traded: " + assetDescription.describe() +
                 "started: " + recordInitialDate.toString() + "\n " +
                 "finished: " + recordFinalDate.toString() +
-                "amount: " + amount;
+                "amount: " + totalVolume;
     }
 
     @Override
@@ -72,8 +74,12 @@ public class TransactionDescription implements Comparable<TransactionDescription
         return recordFinalDate;
     }
 
-    public float getAmount() {
-        return amount;
+    public float getTotalVolume() {
+        return totalVolume;
+    }
+
+    public float getRemainder() {
+        return remainder;
     }
 
     public enum TransactionType {
