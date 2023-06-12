@@ -1,7 +1,9 @@
 package model.database.containers.DailyAssets;
 
+import model.database.containers.Inmutable;
 import model.database.containers.Values;
 
+@Inmutable
 public class DailyAssetValues extends Values<String> {
     private static final int NUMBER_OF_FIELDS_IN_DAILY_ASSETS = 7;
 

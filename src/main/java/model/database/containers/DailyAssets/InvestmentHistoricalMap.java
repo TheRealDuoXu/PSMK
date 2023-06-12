@@ -9,7 +9,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHistoricalMap>, Map<PrimaryKey, Values<String>> {
+public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHistoricalMap>, SortedMap<PrimaryKey, Values<String>> {
     /**
      * Represents any kind of historical data been treated in this programme
      */
@@ -32,7 +32,7 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     private final static int VALUES_POS_LOW = 4;
     private final static int VALUES_POS_CLOSE = 5;
     private final static int VALUES_POS_VOL = 6;
-    LinkedHashMap<PrimaryKey, Values<String>> map;
+    TreeMap<PrimaryKey, Values<String>> map;
     AssetDescription assetDescription;
 
     public InvestmentHistoricalMap(LinkedHashMap<PrimaryKey, Values<String>> map) {

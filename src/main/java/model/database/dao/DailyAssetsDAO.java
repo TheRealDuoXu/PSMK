@@ -8,7 +8,7 @@ import model.session.UninstallExclusive;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
-class DailyAssetsDAO extends DAO {
+public class DailyAssetsDAO extends DAO {
     private static final int DAILY_ASSETS_VALUE_DATA_LENGTH = 7;
     private static final int TICKER_POS = 0;
     private static final int STOCK_EXCHANGE_POS = 1;
@@ -25,7 +25,7 @@ class DailyAssetsDAO extends DAO {
         super();
     }
 
-    static DailyAssetsDAO getInstance() {
+    public static DailyAssetsDAO getInstance() {
         synchronized (DailyAssetsDAO.class) {
             if (instance == null) {
                 instance = new DailyAssetsDAO();

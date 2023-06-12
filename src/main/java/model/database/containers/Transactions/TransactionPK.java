@@ -1,10 +1,11 @@
 package model.database.containers.Transactions;
 
 import model.database.containers.DailyAssets.DailyAssetPK;
+import model.database.containers.Inmutable;
 import model.database.containers.PrimaryKey;
 
 import java.util.Date;
-
+@Inmutable
 public class TransactionPK extends PrimaryKey {
     private static final int NUMBER_OF_FIELDS_IN_PRIMARY_KEY = 3;
     public static final int FIELD_TICKER_POS = 0;
@@ -40,5 +41,10 @@ public class TransactionPK extends PrimaryKey {
 
     public String getPortfolioUUID(){
         return data[FIELD_PORTFOLIO_UUID_POS];
+    }
+
+    @Override
+    public int compareTo(PrimaryKey o) {
+        return 0;
     }
 }

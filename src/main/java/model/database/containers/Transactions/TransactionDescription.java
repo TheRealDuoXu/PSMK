@@ -2,25 +2,22 @@ package model.database.containers.Transactions;
 
 import model.database.containers.DailyAssets.AssetDescription;
 import model.database.containers.Description;
-import model.database.containers.Inmutable;
 
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Date;
 
 /**
  * Describes a Transaction, does not contain all intermediary transactions, only the initial aka first trade
- * and the last trade known. To access all intermediary transactions, access {@link TransactionMap}
- * <p>
- * This is an inmutable object, the user shall not edit as all fields are final
+ * and the last trade known dates. To access all intermediary transactions, access {@link TransactionMap}
  */
-@Inmutable
 public class TransactionDescription implements Comparable<TransactionDescription>, Description {
-    public static final int NUMBER_OF_PARAMETERS = AssetDescription.NUMBER_OF_PARAMETERS + 2;
-    final AssetDescription assetDescription;
-    final Date recordInitialDate, recordFinalDate;
-    final float totalVolume;
-    final float remainder;
+    AssetDescription assetDescription;
+    private Date recordInitialDate, recordFinalDate;
+    double totalVolume;
+    double remainder;
 
-    public TransactionDescription(AssetDescription assetDescription, Date recordInitialDate, Date recordFinalDate, float totalVolume, float remainder) {
+    public TransactionDescription(AssetDescription assetDescription, Date recordInitialDate, Date recordFinalDate, double totalVolume, double remainder) {
         this.assetDescription = assetDescription;
         this.recordInitialDate = recordInitialDate;
         this.recordFinalDate = recordFinalDate;
@@ -74,12 +71,32 @@ public class TransactionDescription implements Comparable<TransactionDescription
         return recordFinalDate;
     }
 
-    public float getTotalVolume() {
+    public double getTotalVolume() {
         return totalVolume;
     }
 
-    public float getRemainder() {
+    public double getRemainder() {
         return remainder;
+    }
+
+    public void setAssetDescription(AssetDescription assetDescription) {
+        this.assetDescription = assetDescription;
+    }
+
+    public void setRecordInitialDate(Date recordInitialDate) {
+        this.recordInitialDate = recordInitialDate;
+    }
+
+    public void setTotalVolume(double totalVolume) {
+        this.totalVolume = totalVolume;
+    }
+
+    public void setRemainder(double remainder) {
+        this.remainder = remainder;
+    }
+
+    public void setRecordFinalDate(Date recordFinalDate) {
+        this.recordFinalDate = recordFinalDate;
     }
 
     public enum TransactionType {

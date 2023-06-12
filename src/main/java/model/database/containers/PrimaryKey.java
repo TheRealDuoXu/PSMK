@@ -4,7 +4,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-public abstract class PrimaryKey{
+public abstract class PrimaryKey implements Comparable<PrimaryKey>{
     protected String[] data;
     public PrimaryKey(String[] data){
         this.data = data;

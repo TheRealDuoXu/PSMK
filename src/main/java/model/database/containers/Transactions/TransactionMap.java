@@ -1,48 +1,94 @@
 package model.database.containers.Transactions;
 
 import model.database.containers.DailyAssets.AssetDescription;
-import model.database.containers.PrimaryKey;
+import model.database.containers.Inmutable;
+import model.database.dao.DailyAssetsDAO;
 
 import java.util.*;
 import java.util.stream.Stream;
 
-public class TransactionMap implements ITransactionDequeMap {
+public class TransactionMap implements OrderedDequeTransactionMap {
 
-    private LinkedHashMap<TransactionPK, TransactionValues> transactionRecord;
+    private final TreeMap<TransactionPK, TransactionValues> transactionRecord;
     private TransactionDescription transactionDescription;
 
-    public TransactionMap(LinkedHashMap<TransactionPK, TransactionValues> transactionRecord) {
+    public TransactionMap(TreeMap<TransactionPK, TransactionValues> transactionRecord) {
         this.transactionRecord = transactionRecord;
-
-        this.transactionDescription = implyTransactionDescription();
+        this.transactionDescription = initTransactionDescription();
     }
 
     public TransactionMap(TransactionPK pk, Float... data) {
-        this.transactionRecord = new LinkedHashMap<>();
+        this.transactionRecord = new TreeMap<TransactionPK, TransactionValues>();
         TransactionValues values = TransactionValues.getInstance(data);
 
         this.transactionRecord.put(pk, values);
 
-        this.transactionDescription = implyTransactionDescription();
+        this.transactionDescription = initTransactionDescription();
+    }
+
+    /**
+     * Implies transaction description from transaction record's every entry.
+     *
+     * @return An instance of {@link TransactionDescription}
+     */
+    private TransactionDescription initTransactionDescription() {
+        AssetDescription assetDescription;
+        Date recordInitialDate, recordFinalDate;
+        double totalVolume, remainder;
+
+        DailyAssetsDAO assetsDAO = DailyAssetsDAO.getInstance();
+
+        Entry<TransactionPK, TransactionValues> inferingEntry = this.transactionRecord.firstEntry();
+        String transactionTicker = inferingEntry.getKey().getTicker();
+
+        assetDescription = assetsDAO.getAssetDescription(transactionTicker);
+        recordInitialDate = transactionRecord.firstEntry().getKey().getDate();
+        recordFinalDate = transactionRecord.lastEntry().getKey().getDate();
+
+        totalVolume = transactionRecord.values().stream()
+                .mapToDouble(TransactionValues::getAbsAmountTraded)
+                .sum();
+        remainder = transactionRecord.values().stream()
+                .mapToDouble(TransactionValues::getAmountTraded)
+                .sum();
+
+        return new TransactionDescription(assetDescription, recordInitialDate, recordFinalDate, totalVolume, remainder);
+    }
+    private void updateTransactionDescription() {
+        Date recordInitialDate, recordFinalDate;
+        double totalVolume, remainder;
+
+        Entry<TransactionPK, TransactionValues> inferingEntry = this.transactionRecord.firstEntry();
+
+        recordInitialDate = transactionRecord.firstEntry().getKey().getDate();
+        recordFinalDate = transactionRecord.lastEntry().getKey().getDate();
+
+        totalVolume = transactionRecord.values().stream()
+                .mapToDouble(TransactionValues::getAbsAmountTraded)
+                .sum();
+        remainder = transactionRecord.values().stream()
+                .mapToDouble(TransactionValues::getAmountTraded)
+                .sum();
+
+        this.transactionDescription.setRecordFinalDate(recordFinalDate);
+        this.transactionDescription.setRecordInitialDate(recordInitialDate);
+        this.transactionDescription.setTotalVolume(totalVolume);
+        this.transactionDescription.setRemainder(remainder);
+    }
+
+    private void verifyTransactionMapHoldsSameAsset(TransactionPK primaryKey) throws IllegalArgumentException {
+        if (isFirstRecordEntry()) return;
+
+        if (!transactionRecord.firstEntry().getKey().getTicker().equals(primaryKey.getTicker()))
+            throw new IllegalArgumentException();
+    }
+
+    private boolean isFirstRecordEntry() {
+        return this.transactionRecord.isEmpty();
     }
 
     public TransactionDescription getTransactionDescription() {
         return transactionDescription;
-    }
-
-    private TransactionDescription implyTransactionDescription() {
-        AssetDescription assetDescription;
-        Date recordInitialDate, recordFinalDate;
-        float totalVolume, remainder;
-
-
-    }
-
-    private void verifyTransactionMapHoldsSameAsset(PrimaryKey primaryKey) throws IllegalArgumentException {
-        if (this.transactionRecord.isEmpty()) {
-            return;
-        }
-
     }
 
     @Override
@@ -71,25 +117,72 @@ public class TransactionMap implements ITransactionDequeMap {
     }
 
     @Override
-    public synchronized TransactionValues put(TransactionPK key, TransactionValues value) {
-        return transactionRecord.put(key, value);
-    }
-
-    @Override
     public synchronized TransactionValues remove(Object key) {
-        return transactionRecord.remove(key);
+        TransactionValues values = transactionRecord.remove(key); // just fulfilling Map contract
+        updateTransactionDescription();
+        return values;
     }
 
     @Override
-    public void putAll(Map<? extends TransactionPK, ? extends TransactionValues> m) {
+    public synchronized TransactionValues put(TransactionPK key, TransactionValues value) {
+        TransactionValues values = transactionRecord.put(key, value); // just fulfilling contract
+
+        verifyTransactionMapHoldsSameAsset(key);
+        updateTransactionDescription();
+        return values;
+    }
+
+    /**
+     * Performs data integrity check on all entries before adding. One exception cases all to abort.
+     *
+     * @param map mappings to be stored in this map
+     */
+    @Override
+    public void putAll(Map<? extends TransactionPK, ? extends TransactionValues> map) {
         synchronized (this) {
-            transactionRecord.putAll(m);
+            for (Entry<? extends TransactionPK, ? extends TransactionValues> entry :
+                    map.entrySet()) {
+                verifyTransactionMapHoldsSameAsset(entry.getKey());
+            }
+            transactionRecord.putAll(map);
+            updateTransactionDescription();
         }
     }
 
     @Override
     public synchronized void clear() {
         transactionRecord.clear();
+        this.transactionDescription = null;
+    }
+
+    @Override
+    public Comparator<? super TransactionPK> comparator() {
+        return transactionRecord.comparator();
+    }
+
+    @Override
+    public SortedMap<TransactionPK, TransactionValues> subMap(TransactionPK fromKey, TransactionPK toKey) {
+        return transactionRecord.subMap(fromKey, toKey);
+    }
+
+    @Override
+    public SortedMap<TransactionPK, TransactionValues> headMap(TransactionPK toKey) {
+        return transactionRecord.headMap(toKey);
+    }
+
+    @Override
+    public SortedMap<TransactionPK, TransactionValues> tailMap(TransactionPK fromKey) {
+        return transactionRecord.tailMap(fromKey);
+    }
+
+    @Override
+    public TransactionPK firstKey() {
+        return transactionRecord.firstKey();
+    }
+
+    @Override
+    public TransactionPK lastKey() {
+        return transactionRecord.lastKey();
     }
 
     @Override
@@ -107,143 +200,162 @@ public class TransactionMap implements ITransactionDequeMap {
         return transactionRecord.entrySet();
     }
 
-    public LinkedHashSet<TransactionPoint> transactionPointSet() {
-        LinkedHashSet<TransactionPoint> transactionPoints = new LinkedHashSet<>();
+    public LinkedHashSet<TransactionEntry> transactionPointSet() {
+        LinkedHashSet<TransactionEntry> transactionEntries = new LinkedHashSet<>();
         for (Entry<TransactionPK, TransactionValues> entry :
                 transactionRecord.entrySet()) {
-            transactionPoints.add(new TransactionPoint(entry.getKey(), entry.getValue()));
+            transactionEntries.add(new TransactionEntry(entry.getKey(), entry.getValue()));
         }
-        return transactionPoints;
+        return transactionEntries;
     }
 
     @Override
-    public synchronized TransactionPoint removeFirst() {
+    public synchronized TransactionEntry removeFirst() {
         return pollFirst();
     }
 
     @Override
-    public synchronized TransactionPoint removeLast() {
+    public synchronized TransactionEntry removeLast() {
         return pollLast();
     }
 
     @Override
-    public synchronized TransactionPoint pollFirst() {
+    public synchronized TransactionEntry pollFirst() {
         if (this.transactionRecord.isEmpty()) return null;
 
         Iterator<TransactionPK> it = this.transactionRecord.keySet().iterator();
-        TransactionPoint transactionPoint;
+        TransactionEntry transactionEntry;
         TransactionPK firstPK = it.next();
 
-        transactionPoint = new TransactionPoint(firstPK, this.transactionRecord.get(firstPK));
+        transactionEntry = new TransactionEntry(firstPK, this.transactionRecord.get(firstPK));
         this.transactionRecord.remove(firstPK);
 
-        return transactionPoint;
+        updateTransactionDescription();
+        return transactionEntry;
     }
 
     @Override
-    public synchronized TransactionPoint pollLast() {
+    public synchronized TransactionEntry pollLast() {
         if (this.transactionRecord.isEmpty()) return null;
 
         Stream<TransactionPK> stream = this.transactionRecord.keySet().stream();
-        TransactionPoint transactionPoint;
+        TransactionEntry transactionEntry;
         TransactionPK lastPK = stream.reduce((first, second) -> second).orElseThrow();
 
-        transactionPoint = new TransactionPoint(lastPK, this.transactionRecord.get(lastPK));
+        transactionEntry = new TransactionEntry(lastPK, this.transactionRecord.get(lastPK));
         this.transactionRecord.remove(lastPK);
 
-        return transactionPoint;
+        updateTransactionDescription();
+        return transactionEntry;
     }
 
     @Override
-    public TransactionPoint peekFirst() {
+    public TransactionEntry peekFirst() {
         if (this.transactionRecord.isEmpty()) return null;
 
         Iterator<TransactionPK> it = this.transactionRecord.keySet().iterator();
-        TransactionPoint transactionPoint;
+        TransactionEntry transactionEntry;
         TransactionPK firstPK = it.next();
 
-        transactionPoint = new TransactionPoint(firstPK, this.transactionRecord.get(firstPK));
+        transactionEntry = new TransactionEntry(firstPK, this.transactionRecord.get(firstPK));
 
-        return transactionPoint;
+        return transactionEntry;
     }
 
     @Override
-    public TransactionPoint peekLast() {
+    public TransactionEntry peekLast() {
         if (this.transactionRecord.isEmpty()) return null;
 
         Stream<TransactionPK> stream = this.transactionRecord.keySet().stream();
-        TransactionPoint transactionPoint;
+        TransactionEntry transactionEntry;
         TransactionPK lastPK = stream.reduce((first, second) -> second).orElseThrow();
 
-        transactionPoint = new TransactionPoint(lastPK, this.transactionRecord.get(lastPK));
+        transactionEntry = new TransactionEntry(lastPK, this.transactionRecord.get(lastPK));
 
-        return transactionPoint;
+        return transactionEntry;
     }
 
     @Override
-    public synchronized TransactionPoint poll() {
+    public synchronized TransactionEntry poll() {
         return pollFirst();
     }
 
     @Override
-    public synchronized TransactionPoint pop() {
+    public synchronized TransactionEntry pop() {
         if (this.transactionRecord.isEmpty()) throw new NullPointerException();
 
         return pollFirst();
     }
 
     @Override
-    public TransactionPoint peek() {
+    public TransactionEntry peek() {
         return peekFirst();
     }
 
+    /**
+     * Version of putAll method that does not throw exception, but instead returns a boolean indicating if operation was
+     * successful or not. Performs block inspection before adding data, if one fails to match Ticker, so does the rest.
+     *
+     * @param collection collections of entries to be added
+     * @return true if success, false if transactionPoint failed to match ticket
+     */
     @Override
-    public synchronized boolean addAll(Collection<? extends TransactionPoint> collection) {
-        for (TransactionPoint transactionPoint :
-                collection) {
-            this.transactionRecord.put(transactionPoint.key, transactionPoint.values);
-        }
-        return true;
-    }
+    public synchronized boolean addAll(Collection<? extends TransactionEntry> collection) {
+        try {
+            for (TransactionEntry transactionEntry :
+                    collection) {
+                verifyTransactionMapHoldsSameAsset(transactionEntry.getKey());
+            }
 
-    @Override
-    public synchronized boolean add(TransactionPoint transactionPoint) {
-        this.transactionRecord.put(transactionPoint.key, transactionPoint.values);
-        return true;
+            for (TransactionEntry transactionEntry :
+                    collection) {
+                this.transactionRecord.put(transactionEntry.key, transactionEntry.values);
+            }
+            updateTransactionDescription();
+            return true;
+        }catch (IllegalArgumentException e){
+            return false;
+        }
     }
 
     /**
-     * Push a transaction point to the first element on the stack. That is index 0
-     * <br>
-     * Do not recommend using this method as it's much slower than offer or add
+     * Version of put method that does not throw exception, but instead returns a boolean indicating if operation was
+     * successful or not.
      *
-     * @param transactionPoint the point to be inserted
+     * @param transactionEntry the entry to be added
+     * @return true if success, false if transactionPoint failed to match ticket
      */
     @Override
-    public synchronized void push(TransactionPoint transactionPoint) {
-        LinkedHashMap<TransactionPK, TransactionValues> tmp = new LinkedHashMap<>();
+    public synchronized boolean add(TransactionEntry transactionEntry) {
+        try {
+            verifyTransactionMapHoldsSameAsset(transactionEntry.getKey());
+            this.transactionRecord.put(transactionEntry.key, transactionEntry.values);
 
-        tmp.put(transactionPoint.key, transactionPoint.values);
-        tmp.putAll(this.transactionRecord);
-
-        this.transactionRecord = tmp;
+            updateTransactionDescription();
+            return true;
+        } catch (IllegalArgumentException e) {
+            return false;
+        }
     }
 
     @Override
-    public boolean containsAll(Collection<? extends TransactionPoint> transactionPoints) {
+    public boolean containsAll(Collection<? extends TransactionEntry> transactionPoints) {
         boolean containsAll = true;
 
-        for (TransactionPoint transactionPoint :
+        for (TransactionEntry transactionEntry :
                 transactionPoints) {
-            if (!this.transactionRecord.containsKey(transactionPoint.key)) containsAll = false;
+            if (!this.transactionRecord.containsKey(transactionEntry.key)) {
+                containsAll = false;
+                break;
+            }
         }
-        
+
         return containsAll;
     }
 
     @Override
-    public boolean contains(TransactionPoint transactionPoint) {
-        return this.transactionRecord.containsKey(transactionPoint.key);
+    public boolean contains(TransactionEntry transactionEntry) {
+        return this.transactionRecord.containsKey(transactionEntry.key);
     }
 
     @Override
@@ -276,18 +388,19 @@ public class TransactionMap implements ITransactionDequeMap {
         return this.transactionRecord.entrySet().iterator();
     }
 
-    public static class TransactionPoint implements Entry<TransactionPK, TransactionValues> {
+    @Inmutable
+    public static class TransactionEntry implements Entry<TransactionPK, TransactionValues> {
         private final TransactionPK key;
-        private TransactionValues values;
+        private final TransactionValues values;
         private TransactionDescription transactionDescription;
 
-        public TransactionPoint(TransactionPK key, TransactionValues values, TransactionDescription transactionDescription) {
+        public TransactionEntry(TransactionPK key, TransactionValues values, TransactionDescription transactionDescription) {
             this.key = key;
             this.values = values;
             this.transactionDescription = transactionDescription;
         }
 
-        public TransactionPoint(TransactionPK key, TransactionValues values) {
+        public TransactionEntry(TransactionPK key, TransactionValues values) {
             this.key = key;
             this.values = values;
         }
@@ -307,9 +420,8 @@ public class TransactionMap implements ITransactionDequeMap {
         }
 
         @Override
-        public TransactionValues setValue(TransactionValues values) {
-            this.values = values;
-            return values;
+        public TransactionValues setValue(TransactionValues value) {
+            throw new UnsupportedOperationException("A transaction entry is supposed @Inmutable");
         }
 
     }

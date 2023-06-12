@@ -1,25 +1,28 @@
 package model.database.containers.DailyAssets;
 
+import model.database.containers.Inmutable;
 import model.database.containers.PrimaryKey;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
-public class DailyAssetPK extends PrimaryKey implements Comparable<DailyAssetPK> {
+@Inmutable
+public class DailyAssetPK extends PrimaryKey {
+    // todo
+    private static final int HISTORIC_YEARS_INTERVAL = 2023 - 1990;
     private static final int NUMBER_OF_FIELDS_IN_PRIMARY_KEY = 2;
-    public static final int COMPARISON_MODE_ORDER_BY_DATE = 0;
-    public static final int COMPARISON_MODE_ORDER_BY_TICKET = 1;
     public static final int FIELD_TICKET_POS = 0;
     public static final int FIELD_DATE_POS = 1;
     private int currentComparisonMode;
 
     private DailyAssetPK(String[] data) {
         super(data);
-        currentComparisonMode = COMPARISON_MODE_ORDER_BY_DATE;
     }
+
     //TODO make this method check for data integrity
-    public static DailyAssetPK getInstance(String ...data) {
+    public static DailyAssetPK getInstance(String... data) {
         if (data.length == NUMBER_OF_FIELDS_IN_PRIMARY_KEY) {
             return new DailyAssetPK(data);
         }
@@ -34,16 +37,9 @@ public class DailyAssetPK extends PrimaryKey implements Comparable<DailyAssetPK>
     public String getStrDate() {
         return data[FIELD_DATE_POS];
     }
-    public Date getDate(){
-        return parseDate(data[FIELD_DATE_POS]);
-    }
 
-    public void setCurrentComparisonMode(int newComparisonMode) {
-        if (newComparisonMode == COMPARISON_MODE_ORDER_BY_TICKET || newComparisonMode == COMPARISON_MODE_ORDER_BY_DATE) {
-            currentComparisonMode = newComparisonMode;
-        } else {
-            throw new IllegalArgumentException("Must be one of the defined options in DailyAssetPrimaryKey");
-        }
+    public Date getDate() {
+        return parseDate(data[FIELD_DATE_POS]);
     }
 
     @Override
@@ -51,33 +47,28 @@ public class DailyAssetPK extends PrimaryKey implements Comparable<DailyAssetPK>
         return new String[]{getTicket(), getStrDate()};
     }
 
+    /**
+     * Comparison will be performed on two primary keys of DailyAssets, ordering will occur based on Ticker and Date
+     *
+     * @param otherPrimaryKey the object to be compared.
+     * @return comparison based on unicode values of two strings and {@link LocalDate}. The Strings comparison adds more
+     * weight
+     */
     @Override
-    public int compareTo(DailyAssetPK other) {
-        checkNullSafety(other);         // following recommendations from Comparable's javadoc
-        checkClassCastSafety(other);    // following recommendations from Comparable's javadoc
+    public int compareTo(PrimaryKey otherPrimaryKey) {
+        checkNullSafety(otherPrimaryKey);         // following recommendations from Comparable's javadoc
+        checkClassCastSafety(otherPrimaryKey);    // following recommendations from Comparable's javadoc
 
-        switch (currentComparisonMode) {
-            case COMPARISON_MODE_ORDER_BY_DATE:
-                return compareDateTo(other);
-            case COMPARISON_MODE_ORDER_BY_TICKET:
-                return compareTicketTo(other);
-            default:
-                throw new RuntimeException("Current comparison mode invalid");
-        }
-    }
-
-    private int compareDateTo(DailyAssetPK other) {
-        Date otherDate = parseDate(other.getStrDate());
-        Date thisDate = parseDate(this.getStrDate());
-
-        return thisDate.compareTo(otherDate);
-    }
-
-    private int compareTicketTo(DailyAssetPK other) {
+        DailyAssetPK other = (DailyAssetPK) otherPrimaryKey;
         String otherTicket = other.getTicket();
-        String thisTicket = this.getTicket();
 
-        return thisTicket.compareTo(otherTicket);
+        // While Date stores millis as a long starting from 1970 Jan 1, long is signed and will not fail
+        LocalDate thisDate = this.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate otherDate = other.getDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+
+        // We use 1000 because it's round and will provide buffer for leap years, any int bigger or equal as 366 will do
+        return this.getTicket().compareTo(otherTicket) * HISTORIC_YEARS_INTERVAL * 1000
+                + thisDate.until(otherDate).getDays();
     }
 
     private void checkClassCastSafety(Object other) throws ClassCastException {
