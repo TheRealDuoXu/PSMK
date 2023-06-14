@@ -6,13 +6,13 @@ import model.database.containers.Values;
 @Inmutable
 public class TransactionValues extends Values {
     private static final int NUMBER_OF_FIELDS_IN_TRANSACTION_VALUES = 1;
-    private final float amount;
+    private final double amount;
 
-    public TransactionValues(float amount) {
+    public TransactionValues(double amount) {
         this.amount = amount;
     }
 
-    public static TransactionValues getInstance(float amount) {
+    public static TransactionValues getInstance(double amount) {
         return new TransactionValues(amount);
     }
 
