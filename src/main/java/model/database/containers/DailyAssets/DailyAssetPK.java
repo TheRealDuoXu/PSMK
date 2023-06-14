@@ -29,7 +29,7 @@ public class DailyAssetPK extends PrimaryKey {
     }
 
     public DailyAssetPK(String ticker, String date) {
-        this.ticker = new Ticker(ticker);
+        this.ticker = Ticker.getInstance(ticker);
         this.date = parseDate(date);
     }
 

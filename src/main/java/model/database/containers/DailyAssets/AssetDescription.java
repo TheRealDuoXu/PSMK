@@ -28,7 +28,7 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
     }
 
     public AssetDescription(String[] orderedStrings) {
-        this.ticker = new PrimaryKey.Ticker(orderedStrings[0]);
+        this.ticker = PrimaryKey.Ticker.getInstance(orderedStrings[0]);
         this.stockExchange = orderedStrings[1];
         this.chrType = orderedStrings[2].toUpperCase().charAt(0);
         this.strType = parseAssetTypeToString(chrType);

@@ -156,7 +156,7 @@ public class TransactionMap extends OrderedDequeTransactionMap {
      */
     @Override
     public synchronized TransactionValues put(TransactionPK pk, TransactionValues value) throws IllegalArgumentException {
-        verifyTransactionMapHoldsSameAsset(new TransactionPK.Ticker(pk.getTicker()));
+        verifyTransactionMapHoldsSameAsset(TransactionPK.Ticker.getInstance(pk.getTicker()));
         TransactionValues values = transactionRecord.put(pk.getDate(), value);
 
         this.pendingDescriptionUpdate = true;
