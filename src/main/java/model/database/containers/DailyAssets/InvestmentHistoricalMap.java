@@ -1,6 +1,4 @@
 package model.database.containers.DailyAssets;
-
-import model.database.containers.PrimaryKey;
 import model.database.containers.Values;
 
 import java.io.BufferedWriter;
@@ -9,7 +7,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHistoricalMap>, SortedMap<PrimaryKey, Values<String>> {
+public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHistoricalMap>, Map<Date, Values<String>> {
     /**
      * Represents any kind of historical data been treated in this programme
      */
@@ -32,24 +30,23 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     private final static int VALUES_POS_LOW = 4;
     private final static int VALUES_POS_CLOSE = 5;
     private final static int VALUES_POS_VOL = 6;
-    TreeMap<PrimaryKey, Values<String>> map;
+    private static final short COL_DATE_LENGTH = 1;
+    LinkedHashMap<java.util.Date, Values<String>> map;
     AssetDescription assetDescription;
 
-    public InvestmentHistoricalMap(LinkedHashMap<PrimaryKey, Values<String>> map) {
+    public InvestmentHistoricalMap(LinkedHashMap<java.util.Date, Values<String>> map) {
         this.map = map;
     }
-    public InvestmentHistoricalMap(PrimaryKey key, Values<String> values) {
-        this.map = new LinkedHashMap<PrimaryKey, Values<String>>();
-        this.map.put(key, values);
-    }
     public InvestmentHistoricalMap(){
-        this.map = new LinkedHashMap<PrimaryKey, Values<String>>();
+        this.map = new LinkedHashMap<>();
     }
 
     @Override
     public abstract String toString();
 
+    @Deprecated
     public void toCSVFile() {
+        //todo use fileDAO instead
         String[][] data = toArray();
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter("output.csv"))) {
@@ -70,18 +67,18 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     public String[][] toArray() {
-        Set<Map.Entry<PrimaryKey, Values<String>>> entrySet = map.entrySet();
-        Iterator<Map.Entry<PrimaryKey, Values<String>>> it = entrySet.iterator();
-        Map.Entry<PrimaryKey, Values<String>> entry = it.next();
+        Set<Map.Entry<Date, Values<String>>> entrySet = map.entrySet();
+        Iterator<Map.Entry<Date, Values<String>>> it = entrySet.iterator();
+        Map.Entry<Date, Values<String>> entry = it.next();
 
 
         int row_size = entrySet.size();
-        int col_size = entry.getValue().getData().length + entry.getKey().getData().length;
+        int col_size = entry.getValue().getData().length + COL_DATE_LENGTH;
 
         String[][] strTable = new String[row_size][col_size];
 
         int i = 0;
-        PrimaryKey tmpKey;
+        Date tmpKey;
         Values<String> tmpValues;
         while (it.hasNext()) {
             tmpKey = entry.getKey();
@@ -89,7 +86,7 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
 
             String[] strTableRow = strTable[i];
 
-            populateStrTableRow(tmpKey, tmpValues, strTableRow);
+            populateStrTableRow(new DailyAssetPK(assetDescription.getTicker(), tmpKey), tmpValues, strTableRow);
 
             entry = it.next();
             i++;
@@ -98,11 +95,11 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
         return strTable;
     }
 
-    private void populateStrTableRow(PrimaryKey tmpKey, Values<String> tmpValues, String[] nextRow) {
-        nextRow[ARRAY_POS_TICKER] = tmpKey.getData()[PRIMARY_KEY_POS_TICKER]; // Ticket
+    private void populateStrTableRow(DailyAssetPK tmpKey, Values<String> tmpValues, String[] nextRow) {
+        nextRow[ARRAY_POS_TICKER] = tmpKey.getStrTicket(); // Ticket
         nextRow[ARRAY_POS_STOCK_EXCHANGE] = tmpValues.getData()[VALUES_POS_STOCK_EXCHANGE]; // Stock_exchange
         nextRow[ARRAY_POS_TYPE] = tmpValues.getData()[VALUES_POS_TYPE]; // Type
-        nextRow[ARRAY_POS_DATE] = tmpKey.getData()[PRIMARY_KEY_POS_DATE]; // Date
+        nextRow[ARRAY_POS_DATE] = tmpKey.getStrDate(); // Date
         nextRow[ARRAY_POS_OPEN] = tmpValues.getData()[VALUES_POS_OPEN]; // Open
         nextRow[ARRAY_POS_HIGH] = tmpValues.getData()[VALUES_POS_HIGH]; // High
         nextRow[ARRAY_POS_LOW] = tmpValues.getData()[VALUES_POS_LOW]; // Low
@@ -111,14 +108,14 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     public String[] toFirstRowArray() {
-        Set<Map.Entry<PrimaryKey, Values<String>>> entrySet = map.entrySet();
-        Iterator<Map.Entry<PrimaryKey, Values<String>>> it = entrySet.iterator();
-        Map.Entry<PrimaryKey, Values<String>> entry = it.next();
+        Set<Map.Entry<Date, Values<String>>> entrySet = map.entrySet();
+        Iterator<Map.Entry<Date, Values<String>>> it = entrySet.iterator();
+        Map.Entry<Date, Values<String>> entry = it.next();
 
-        PrimaryKey tmpKey = entry.getKey();
+        DailyAssetPK tmpKey = new DailyAssetPK(assetDescription.getTicker(), entry.getKey());
         Values<String> tmpValues = entry.getValue();
 
-        String[] firstRow = new String[tmpKey.getData().length + tmpValues.getData().length];
+        String[] firstRow = new String[DailyAssetPK.NUMBER_OF_FIELDS_IN_PK + tmpValues.getData().length];
 
         populateStrTableRow(tmpKey, tmpValues, firstRow);
 
@@ -163,7 +160,7 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     @Override
-    public Values<String> put(PrimaryKey key, Values<String> value) {
+    public Values<String> put(Date key, Values<String> value) {
         return map.put(key,value);
     }
 
@@ -173,7 +170,7 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     @Override
-    public void putAll(Map<? extends PrimaryKey, ? extends Values<String>> m) {
+    public void putAll(Map<? extends Date, ? extends Values<String>> m) {
         map.putAll(m);
     }
 
@@ -183,7 +180,7 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     @Override
-    public Set<PrimaryKey> keySet() {
+    public Set<Date> keySet() {
         return map.keySet();
     }
 
@@ -193,7 +190,7 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     @Override
-    public Set<Entry<PrimaryKey, Values<String>>> entrySet() {
+    public Set<Entry<Date, Values<String>>> entrySet() {
         return map.entrySet();
     }
 }

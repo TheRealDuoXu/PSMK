@@ -7,8 +7,8 @@ public enum SQLQuery {
     SELECT_DAILY_ASSET_BTW_DATES("select * from DailyAssets where Ticker = '?' and Date between '?' and '?'", 3),
     SELECT_TRANSACTION_REMAINDER_BY_PORTFOLIO_UUID("select * from " + SQLTable.TRANSACTION_REMAINDER + " " +
             "where FK_UUID_Portfolio = '?'", 1),
-    SELECT_TRANSACTION_HISTORY_BY_PORTFOLIO_UUID("select * from " + SQLTable.TRANSACTIONS + " " +
-            "where FK_UUID_Portfolio = '?'", 1),
+    SELECT_TRANSACTION_MAPS_ON_PORTFOLIO("select FK_Ticker_DailyAssets, FK_Date_DailyAssets, amount from " + SQLTable.TRANSACTIONS +
+            " where FK_UUID_Portfolio = '?'", 1),
     SELECT_TRANSACTION_HISTORY_BY_PORTFOLIO_AND_TICKER("select * from " + SQLTable.TRANSACTIONS + " " +
             "where FK_UUID_Portfolio = '?' and FK_Ticker_DailyAssets = '?'", 2),
     SELECT_TRANSACTION_POINT("select * from " + SQLTable.TRANSACTIONS + " " +
@@ -18,7 +18,8 @@ public enum SQLQuery {
             "where FK_UUID_user = '?'", 1),
     SELECT_DAILY_ASSETS_VALUES_BY_PKs("select Stock_exchange, Type, Open, High, Low, Close, Vol " +
             "from DailyAssets where Ticker='?' and Date='?'", 2),
-    SELECT_PORTFOLIO_DESCRIPTION_BY_UUID("select * from Portfolio where UUID = '?'",1),
+    SELECT_PORTFOLIO_DESCRIPTION_BY_UUID("select * from Portfolio where UUID = '?'", 1),
+
 
     INSERT_INTO_USER("insert into " + SQLTable.USER + "(UUID, login, password) values ('?', '?', '?')", 3),
     INSERT_DAILY_ASSET("insert into DailyAssets(Ticker, Stock_exchange, Type, Date, Open, High, Low, Close, Vol) " +

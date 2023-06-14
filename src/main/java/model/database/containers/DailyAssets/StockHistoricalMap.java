@@ -1,16 +1,9 @@
 package model.database.containers.DailyAssets;
 
-import model.database.containers.PrimaryKey;
-import model.database.containers.Values;
-
-import java.util.LinkedHashMap;
-
 public class StockHistoricalMap extends InvestmentHistoricalMap {
-    public StockHistoricalMap(LinkedHashMap<PrimaryKey, Values<String>> map){
-        super(map);
-    }
-    public StockHistoricalMap(DailyAssetPK primaryKey, DailyAssetValues values) {
-        super(primaryKey, values);
+    public StockHistoricalMap(DailyAssetPK pk, DailyAssetValues values) {
+        super();
+        map.put(pk.getDate(), values);
     }
     public StockHistoricalMap(){
         super();

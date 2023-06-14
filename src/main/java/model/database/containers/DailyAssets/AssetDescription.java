@@ -2,6 +2,7 @@ package model.database.containers.DailyAssets;
 
 import model.database.containers.Description;
 import model.database.containers.Inmutable;
+import model.database.containers.PrimaryKey;
 
 /**
  * Describes an asset, does not contain time data as it is contained in the maps as PK
@@ -12,13 +13,13 @@ import model.database.containers.Inmutable;
 @Inmutable
 public class AssetDescription implements Comparable<AssetDescription>, Description {
     public static final int NUMBER_OF_PARAMETERS = 3;
-    final String ticker;
+    final PrimaryKey.Ticker ticker;
     final String stockExchange;
     final String strType;
     final char chrType;
     final AssetType assetType;
 
-    public AssetDescription(String ticker, String stockExchange, char chrType) {
+    public AssetDescription(PrimaryKey.Ticker ticker, String stockExchange, char chrType) {
         this.ticker = ticker;
         this.stockExchange = stockExchange;
         this.chrType = chrType;
@@ -27,7 +28,7 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
     }
 
     public AssetDescription(String[] orderedStrings) {
-        this.ticker = orderedStrings[0];
+        this.ticker = new PrimaryKey.Ticker(orderedStrings[0]);
         this.stockExchange = orderedStrings[1];
         this.chrType = orderedStrings[2].toUpperCase().charAt(0);
         this.strType = parseAssetTypeToString(chrType);
@@ -101,8 +102,11 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
         }
     }
 
-    public String getTicker() {
+    public PrimaryKey.Ticker getTicker() {
         return ticker;
+    }
+    public String getStrTicker() {
+        return ticker.getTicker();
     }
 
     public String getStockExchange() {
@@ -123,6 +127,6 @@ public class AssetDescription implements Comparable<AssetDescription>, Descripti
 
     @Override
     public int compareTo(AssetDescription other) {
-        return this.ticker.compareToIgnoreCase(other.ticker);
+        return this.ticker.toString().compareToIgnoreCase(other.ticker.toString());
     }
 }

@@ -5,25 +5,35 @@ import model.database.containers.Inmutable;
 import model.database.dao.DailyAssetsDAO;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public class TransactionMap implements OrderedDequeTransactionMap {
-
-    private final TreeMap<TransactionPK, TransactionValues> transactionRecord;
+public class TransactionMap extends OrderedDequeTransactionMap {
+    private TreeMap<Date, TransactionValues> transactionRecord; // TreeMap will auto-index based on dates
+    public final TransactionPK.Ticker ticker; // Useful for comparing with other tickers
     private TransactionDescription transactionDescription;
+    private Iterator<Entry<Date, TransactionValues>> entryIterator;
+    private boolean pendingDescriptionUpdate = false;
 
-    public TransactionMap(TreeMap<TransactionPK, TransactionValues> transactionRecord) {
+    public TransactionMap(TransactionPK.Ticker ticker, TreeMap<Date, TransactionValues> transactionRecord) {
+        this.ticker = ticker;
         this.transactionRecord = transactionRecord;
-        this.transactionDescription = initTransactionDescription();
+        this.transactionDescription = initTransactionDescription(ticker);
     }
 
-    public TransactionMap(TransactionPK pk, Float... data) {
-        this.transactionRecord = new TreeMap<TransactionPK, TransactionValues>();
-        TransactionValues values = TransactionValues.getInstance(data);
+    public TransactionMap(TransactionPK.Ticker ticker, Date date, double amount) {
+        this.ticker = ticker;
+        this.transactionRecord = new TreeMap<Date, TransactionValues>();
+        TransactionValues values = TransactionValues.getInstance(amount);
 
-        this.transactionRecord.put(pk, values);
+        this.transactionRecord.put(date, values);
 
-        this.transactionDescription = initTransactionDescription();
+        this.transactionDescription = initTransactionDescription(ticker);
+    }
+
+    public TransactionMap(TransactionPK.Ticker ticker) {
+        this.transactionRecord = new TreeMap<>();
+        this.ticker = ticker;
     }
 
     /**
@@ -31,19 +41,16 @@ public class TransactionMap implements OrderedDequeTransactionMap {
      *
      * @return An instance of {@link TransactionDescription}
      */
-    private TransactionDescription initTransactionDescription() {
+    private TransactionDescription initTransactionDescription(TransactionPK.Ticker ticker) {
         AssetDescription assetDescription;
         Date recordInitialDate, recordFinalDate;
         double totalVolume, remainder;
 
         DailyAssetsDAO assetsDAO = DailyAssetsDAO.getInstance();
 
-        Entry<TransactionPK, TransactionValues> inferingEntry = this.transactionRecord.firstEntry();
-        String transactionTicker = inferingEntry.getKey().getTicker();
-
-        assetDescription = assetsDAO.getAssetDescription(transactionTicker);
-        recordInitialDate = transactionRecord.firstEntry().getKey().getDate();
-        recordFinalDate = transactionRecord.lastEntry().getKey().getDate();
+        assetDescription = assetsDAO.getAssetDescription(ticker.getTicker());
+        recordInitialDate = transactionRecord.firstEntry().getKey();
+        recordFinalDate = transactionRecord.lastEntry().getKey();
 
         totalVolume = transactionRecord.values().stream()
                 .mapToDouble(TransactionValues::getAbsAmountTraded)
@@ -52,16 +59,16 @@ public class TransactionMap implements OrderedDequeTransactionMap {
                 .mapToDouble(TransactionValues::getAmountTraded)
                 .sum();
 
+        this.pendingDescriptionUpdate = false;
         return new TransactionDescription(assetDescription, recordInitialDate, recordFinalDate, totalVolume, remainder);
     }
-    private void updateTransactionDescription() {
+
+    public void updateTransactionDescription() {
         Date recordInitialDate, recordFinalDate;
         double totalVolume, remainder;
 
-        Entry<TransactionPK, TransactionValues> inferingEntry = this.transactionRecord.firstEntry();
-
-        recordInitialDate = transactionRecord.firstEntry().getKey().getDate();
-        recordFinalDate = transactionRecord.lastEntry().getKey().getDate();
+        recordInitialDate = transactionRecord.firstEntry().getKey();
+        recordFinalDate = transactionRecord.lastEntry().getKey();
 
         totalVolume = transactionRecord.values().stream()
                 .mapToDouble(TransactionValues::getAbsAmountTraded)
@@ -74,12 +81,13 @@ public class TransactionMap implements OrderedDequeTransactionMap {
         this.transactionDescription.setRecordInitialDate(recordInitialDate);
         this.transactionDescription.setTotalVolume(totalVolume);
         this.transactionDescription.setRemainder(remainder);
+        this.pendingDescriptionUpdate = false;
     }
 
-    private void verifyTransactionMapHoldsSameAsset(TransactionPK primaryKey) throws IllegalArgumentException {
+    private void verifyTransactionMapHoldsSameAsset(TransactionPK.Ticker otherTicker) throws IllegalArgumentException {
         if (isFirstRecordEntry()) return;
 
-        if (!transactionRecord.firstEntry().getKey().getTicker().equals(primaryKey.getTicker()))
+        if (!this.ticker.equals(otherTicker))
             throw new IllegalArgumentException();
     }
 
@@ -88,6 +96,9 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     }
 
     public TransactionDescription getTransactionDescription() {
+        if (pendingDescriptionUpdate)
+            updateTransactionDescription();
+
         return transactionDescription;
     }
 
@@ -116,6 +127,7 @@ public class TransactionMap implements OrderedDequeTransactionMap {
         return transactionRecord.get(key);
     }
 
+
     @Override
     public synchronized TransactionValues remove(Object key) {
         TransactionValues values = transactionRecord.remove(key); // just fulfilling Map contract
@@ -123,29 +135,48 @@ public class TransactionMap implements OrderedDequeTransactionMap {
         return values;
     }
 
+    /**
+     * As this is the default method to add entries to the map, it does not update its description. This allows for
+     * faster encapsulation of data.
+     * To "add" and update, use add method.
+     */
     @Override
-    public synchronized TransactionValues put(TransactionPK key, TransactionValues value) {
-        TransactionValues values = transactionRecord.put(key, value); // just fulfilling contract
+    public synchronized TransactionValues put(TransactionPK.Ticker ticker, Date date, TransactionValues value) throws IllegalArgumentException {
+        verifyTransactionMapHoldsSameAsset(ticker);
+        TransactionValues values = transactionRecord.put(date, value);
 
-        verifyTransactionMapHoldsSameAsset(key);
-        updateTransactionDescription();
+        this.pendingDescriptionUpdate = true;
         return values;
     }
 
     /**
-     * Performs data integrity check on all entries before adding. One exception cases all to abort.
+     * As this is the default method to add entries to the map, it does not update its description. This allows for
+     * faster encapsulation of data.
+     * To "add" and update, use add method.
+     */
+    @Override
+    public synchronized TransactionValues put(TransactionPK pk, TransactionValues value) throws IllegalArgumentException {
+        verifyTransactionMapHoldsSameAsset(new TransactionPK.Ticker(pk.getTicker()));
+        TransactionValues values = transactionRecord.put(pk.getDate(), value);
+
+        this.pendingDescriptionUpdate = true;
+        return values;
+    }
+
+    /**
+     * WARNING! Does not perform integrity check on all data, just on the ticker you provided. Put will throw exception
+     * if ticker does not match first item's ticker.
+     * Put does not update transaction description.
      *
      * @param map mappings to be stored in this map
      */
     @Override
-    public void putAll(Map<? extends TransactionPK, ? extends TransactionValues> map) {
+    public synchronized void putAll(TransactionPK.Ticker ticker, Map<? extends Date, ? extends TransactionValues> map) throws IllegalArgumentException {
         synchronized (this) {
-            for (Entry<? extends TransactionPK, ? extends TransactionValues> entry :
-                    map.entrySet()) {
-                verifyTransactionMapHoldsSameAsset(entry.getKey());
-            }
+            verifyTransactionMapHoldsSameAsset(ticker);
             transactionRecord.putAll(map);
-            updateTransactionDescription();
+
+            this.pendingDescriptionUpdate = true;
         }
     }
 
@@ -156,37 +187,37 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     }
 
     @Override
-    public Comparator<? super TransactionPK> comparator() {
+    public Comparator<? super Date> comparator() {
         return transactionRecord.comparator();
     }
 
     @Override
-    public SortedMap<TransactionPK, TransactionValues> subMap(TransactionPK fromKey, TransactionPK toKey) {
-        return transactionRecord.subMap(fromKey, toKey);
+    public SortedMap<Date, TransactionValues> subMap(Date fromDate, Date toDate) {
+        return transactionRecord.subMap(fromDate, toDate);
     }
 
     @Override
-    public SortedMap<TransactionPK, TransactionValues> headMap(TransactionPK toKey) {
-        return transactionRecord.headMap(toKey);
+    public SortedMap<Date, TransactionValues> headMap(Date toDate) {
+        return transactionRecord.headMap(toDate);
     }
 
     @Override
-    public SortedMap<TransactionPK, TransactionValues> tailMap(TransactionPK fromKey) {
-        return transactionRecord.tailMap(fromKey);
+    public SortedMap<Date, TransactionValues> tailMap(Date fromDate) {
+        return transactionRecord.tailMap(fromDate);
     }
 
     @Override
-    public TransactionPK firstKey() {
+    public Date firstKey() {
         return transactionRecord.firstKey();
     }
 
     @Override
-    public TransactionPK lastKey() {
+    public Date lastKey() {
         return transactionRecord.lastKey();
     }
 
     @Override
-    public Set<TransactionPK> keySet() {
+    public Set<Date> keySet() {
         return transactionRecord.keySet();
     }
 
@@ -196,13 +227,14 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     }
 
     @Override
-    public Set<Entry<TransactionPK, TransactionValues>> entrySet() {
+    public Set<Entry<Date, TransactionValues>> entrySet() {
         return transactionRecord.entrySet();
     }
 
+
     public LinkedHashSet<TransactionEntry> transactionPointSet() {
         LinkedHashSet<TransactionEntry> transactionEntries = new LinkedHashSet<>();
-        for (Entry<TransactionPK, TransactionValues> entry :
+        for (Entry<Date, TransactionValues> entry :
                 transactionRecord.entrySet()) {
             transactionEntries.add(new TransactionEntry(entry.getKey(), entry.getValue()));
         }
@@ -223,12 +255,12 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     public synchronized TransactionEntry pollFirst() {
         if (this.transactionRecord.isEmpty()) return null;
 
-        Iterator<TransactionPK> it = this.transactionRecord.keySet().iterator();
+        Iterator<Date> it = this.transactionRecord.keySet().iterator();
         TransactionEntry transactionEntry;
-        TransactionPK firstPK = it.next();
+        Date firstDate = it.next();
 
-        transactionEntry = new TransactionEntry(firstPK, this.transactionRecord.get(firstPK));
-        this.transactionRecord.remove(firstPK);
+        transactionEntry = new TransactionEntry(firstDate, this.transactionRecord.get(firstDate));
+        this.transactionRecord.remove(firstDate);
 
         updateTransactionDescription();
         return transactionEntry;
@@ -238,12 +270,12 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     public synchronized TransactionEntry pollLast() {
         if (this.transactionRecord.isEmpty()) return null;
 
-        Stream<TransactionPK> stream = this.transactionRecord.keySet().stream();
+        Stream<Date> stream = this.transactionRecord.keySet().stream();
         TransactionEntry transactionEntry;
-        TransactionPK lastPK = stream.reduce((first, second) -> second).orElseThrow();
+        Date lastDate = stream.reduce((first, second) -> second).orElseThrow();
 
-        transactionEntry = new TransactionEntry(lastPK, this.transactionRecord.get(lastPK));
-        this.transactionRecord.remove(lastPK);
+        transactionEntry = new TransactionEntry(lastDate, this.transactionRecord.get(lastDate));
+        this.transactionRecord.remove(lastDate);
 
         updateTransactionDescription();
         return transactionEntry;
@@ -253,11 +285,11 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     public TransactionEntry peekFirst() {
         if (this.transactionRecord.isEmpty()) return null;
 
-        Iterator<TransactionPK> it = this.transactionRecord.keySet().iterator();
+        Iterator<Date> it = this.transactionRecord.keySet().iterator();
         TransactionEntry transactionEntry;
-        TransactionPK firstPK = it.next();
+        Date firstDate = it.next();
 
-        transactionEntry = new TransactionEntry(firstPK, this.transactionRecord.get(firstPK));
+        transactionEntry = new TransactionEntry(firstDate, this.transactionRecord.get(firstDate));
 
         return transactionEntry;
     }
@@ -266,11 +298,11 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     public TransactionEntry peekLast() {
         if (this.transactionRecord.isEmpty()) return null;
 
-        Stream<TransactionPK> stream = this.transactionRecord.keySet().stream();
+        Stream<Date> stream = this.transactionRecord.keySet().stream();
         TransactionEntry transactionEntry;
-        TransactionPK lastPK = stream.reduce((first, second) -> second).orElseThrow();
+        Date lastDate = stream.reduce((first, second) -> second).orElseThrow();
 
-        transactionEntry = new TransactionEntry(lastPK, this.transactionRecord.get(lastPK));
+        transactionEntry = new TransactionEntry(lastDate, this.transactionRecord.get(lastDate));
 
         return transactionEntry;
     }
@@ -283,7 +315,6 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     @Override
     public synchronized TransactionEntry pop() {
         if (this.transactionRecord.isEmpty()) throw new NullPointerException();
-
         return pollFirst();
     }
 
@@ -293,43 +324,41 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     }
 
     /**
+     * WARNING! Performs only one inspection on ticker, it assumes all following entries are for the same ticker.
      * Version of putAll method that does not throw exception, but instead returns a boolean indicating if operation was
-     * successful or not. Performs block inspection before adding data, if one fails to match Ticker, so does the rest.
+     * successful or not.
      *
      * @param collection collections of entries to be added
      * @return true if success, false if transactionPoint failed to match ticket
      */
     @Override
-    public synchronized boolean addAll(Collection<? extends TransactionEntry> collection) {
+    public synchronized boolean addAll(TransactionPK.Ticker ticker, Collection<? extends TransactionEntry> collection) {
         try {
-            for (TransactionEntry transactionEntry :
-                    collection) {
-                verifyTransactionMapHoldsSameAsset(transactionEntry.getKey());
-            }
+            verifyTransactionMapHoldsSameAsset(ticker);
 
             for (TransactionEntry transactionEntry :
                     collection) {
-                this.transactionRecord.put(transactionEntry.key, transactionEntry.values);
+                this.transactionRecord.put(transactionEntry.date, transactionEntry.values);
             }
             updateTransactionDescription();
             return true;
-        }catch (IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             return false;
         }
     }
 
     /**
      * Version of put method that does not throw exception, but instead returns a boolean indicating if operation was
-     * successful or not.
+     * successful or not. Add always updates
      *
      * @param transactionEntry the entry to be added
      * @return true if success, false if transactionPoint failed to match ticket
      */
     @Override
-    public synchronized boolean add(TransactionEntry transactionEntry) {
+    public synchronized boolean add(TransactionPK.Ticker ticker, TransactionEntry transactionEntry) {
         try {
-            verifyTransactionMapHoldsSameAsset(transactionEntry.getKey());
-            this.transactionRecord.put(transactionEntry.key, transactionEntry.values);
+            verifyTransactionMapHoldsSameAsset(ticker);
+            this.transactionRecord.put(transactionEntry.date, transactionEntry.values);
 
             updateTransactionDescription();
             return true;
@@ -344,7 +373,7 @@ public class TransactionMap implements OrderedDequeTransactionMap {
 
         for (TransactionEntry transactionEntry :
                 transactionPoints) {
-            if (!this.transactionRecord.containsKey(transactionEntry.key)) {
+            if (!this.transactionRecord.containsKey(transactionEntry.date)) {
                 containsAll = false;
                 break;
             }
@@ -355,12 +384,7 @@ public class TransactionMap implements OrderedDequeTransactionMap {
 
     @Override
     public boolean contains(TransactionEntry transactionEntry) {
-        return this.transactionRecord.containsKey(transactionEntry.key);
-    }
-
-    @Override
-    public Set<TransactionPK> getPrimaryKeySet() {
-        return this.transactionRecord.keySet();
+        return this.transactionRecord.containsKey(transactionEntry.date);
     }
 
     @Override
@@ -369,12 +393,12 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     }
 
     @Override
-    public Set<Entry<TransactionPK, TransactionValues>> getEntrySet() {
+    public Set<Entry<Date, TransactionValues>> getEntrySet() {
         return this.entrySet();
     }
 
     @Override
-    public Iterator<TransactionPK> keyIterator() {
+    public Iterator<Date> keyIterator() {
         return this.keySet().iterator();
     }
 
@@ -384,24 +408,53 @@ public class TransactionMap implements OrderedDequeTransactionMap {
     }
 
     @Override
-    public Iterator<Entry<TransactionPK, TransactionValues>> entryIterator() {
+    public Iterator<Entry<Date, TransactionValues>> entryIterator() {
+        return this.transactionRecord.entrySet().iterator();
+    }
+    @Override
+    public Iterator<Entry<Date, TransactionValues>> iterator() {
         return this.transactionRecord.entrySet().iterator();
     }
 
+    @Override
+    public void forEach(Consumer<? super Entry<Date, TransactionValues>> action) {
+        transactionRecord.entrySet().forEach(action);
+    }
+
+    @Override
+    public void resetCursor() {
+        this.entryIterator = transactionRecord.entrySet().iterator();
+    }
+
+    @Override
+    public TransactionEntry nextEntry() {
+        if (entryIterator == null) entryIterator = transactionRecord.entrySet().iterator();
+
+        if (!hasNextEntry()) throw new NullPointerException("No more entries on iterator");
+
+        Entry<Date, TransactionValues> entry = this.entryIterator.next();
+        return new TransactionEntry(entry.getKey(), entry.getValue(), this.transactionDescription);
+    }
+
+    @Override
+    public boolean hasNextEntry() {
+        return entryIterator.hasNext();
+    }
+
     @Inmutable
-    public static class TransactionEntry implements Entry<TransactionPK, TransactionValues> {
-        private final TransactionPK key;
+    public static class TransactionEntry implements Entry<Date, TransactionValues> {
+        private final Date date;
         private final TransactionValues values;
         private TransactionDescription transactionDescription;
 
-        public TransactionEntry(TransactionPK key, TransactionValues values, TransactionDescription transactionDescription) {
-            this.key = key;
+        public TransactionEntry(Date date, TransactionValues values, TransactionDescription transactionDescription) {
+            this.date = date;
             this.values = values;
             this.transactionDescription = transactionDescription;
         }
 
-        public TransactionEntry(TransactionPK key, TransactionValues values) {
-            this.key = key;
+        public TransactionEntry(Date date, TransactionValues values) {
+            this.date = date;
             this.values = values;
         }
 
@@ -410,8 +463,8 @@ public class TransactionMap implements OrderedDequeTransactionMap {
         }
 
         @Override
-        public TransactionPK getKey() {
-            return key;
+        public Date getKey() {
+            return date;
         }
 
         @Override
@@ -420,7 +473,7 @@ public class TransactionMap implements OrderedDequeTransactionMap {
         }
 
         @Override
-        public TransactionValues setValue(TransactionValues value) {
+        public final TransactionValues setValue(TransactionValues value) {
             throw new UnsupportedOperationException("A transaction entry is supposed @Inmutable");
         }
 

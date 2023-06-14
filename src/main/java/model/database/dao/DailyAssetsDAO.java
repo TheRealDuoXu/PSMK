@@ -3,7 +3,6 @@ package model.database.dao;
 import model.database.SQLQuery;
 import model.database.containers.DailyAssets.*;
 import model.database.containers.Values;
-import model.session.UninstallExclusive;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -36,7 +35,7 @@ public class DailyAssetsDAO extends DAO {
 
     public Values<String> getOneDailyAssetByPK(DailyAssetPK primaryKey) {
         SQLQuery sql = SQLQuery.SELECT_DAILY_ASSETS_VALUES_BY_PKs;
-        try (ResultSet resultSet = executeQuery(sql, primaryKey.getTicket(), primaryKey.getStrDate())) {
+        try (ResultSet resultSet = executeQuery(sql, primaryKey.getStrTicket(), primaryKey.getStrDate())) {
             String[] values = new String[DAILY_ASSETS_VALUE_DATA_LENGTH];
             for (int i = 0; i < DAILY_ASSETS_VALUE_DATA_LENGTH; i++) {
                 values[i] = resultSet.getString(i);
@@ -118,14 +117,12 @@ public class DailyAssetsDAO extends DAO {
     }
 
     private <ContainerType extends InvestmentHistoricalMap> ContainerType fillContainer(ContainerType container, ResultSet resultSet) throws SQLException {
-        DailyAssetPK pk;
+        Date key;
         DailyAssetValues values;
         ensureDataIntegrity(resultSet.getString(TYPE_POS), container.getType());
 
         while (resultSet.next()) {
-            pk = DailyAssetPK.getInstance(
-                    resultSet.getString(TICKER_POS),
-                    resultSet.getString(DATE_POS));
+            key = DailyAssetPK.parseDate(resultSet.getString(DATE_POS));
 
             values = DailyAssetValues.getInstance(
                     resultSet.getString(STOCK_EXCHANGE_POS),
@@ -136,7 +133,7 @@ public class DailyAssetsDAO extends DAO {
                     resultSet.getString(CLOSE_POS),
                     resultSet.getString(VOL_POS));
 
-            container.put(pk, values);
+            container.put(key, values);
         }
         return container;
     }
