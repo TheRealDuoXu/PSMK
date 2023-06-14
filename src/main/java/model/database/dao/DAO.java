@@ -3,7 +3,6 @@ package model.database.dao;
 import model.database.SQLQuery;
 
 import java.sql.*;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
 public abstract class DAO implements AutoCloseable{

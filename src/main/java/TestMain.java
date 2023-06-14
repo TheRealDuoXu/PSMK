@@ -1,9 +1,9 @@
-import model.database.DAOFactory;
-import model.session.GuestSession;
 import controller.processing.FinancialCalculatorCore;
+import model.database.DAOFactory;
 import model.results.IRRResult;
 import model.results.IRRResultPrecise;
 import model.results.NPVResult;
+import model.session.GuestSession;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;

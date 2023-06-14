@@ -3,8 +3,6 @@ package model.database.containers.Transactions;
 import model.database.containers.DailyAssets.AssetDescription;
 import model.database.containers.Description;
 
-import java.time.LocalDate;
-import java.time.ZoneId;
 import java.util.Date;
 
 /**
