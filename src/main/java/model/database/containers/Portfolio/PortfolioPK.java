@@ -26,4 +26,8 @@ public class PortfolioPK extends PrimaryKey {
         return 0;
     }
 
+    @Override
+    public int length() {
+        return NUMBER_OF_FIELDS_IN_PRIMARY_KEY;
+    }
 }

@@ -4,7 +4,7 @@ import model.database.containers.Values;
 
 public class BondHistoricalMap extends InvestmentHistoricalMap {
 
-    public BondHistoricalMap(DailyAssetPK key, Values<String> value) {
+    public BondHistoricalMap(DailyAssetPK key, DailyAssetValues value) {
         super();
         map.put(key.getDate(), value);
     }

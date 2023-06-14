@@ -4,28 +4,28 @@ import model.database.containers.Inmutable;
 import model.database.containers.Values;
 
 @Inmutable
-public class TransactionValues extends Values<Double> {
+public class TransactionValues extends Values {
     private static final int NUMBER_OF_FIELDS_IN_TRANSACTION_VALUES = 1;
-    private static final int FIELD_AMOUNT_TRADED_POS = 3;
+    private final float amount;
 
-    private TransactionValues(Double[] data) {
-        super(data);
+    public TransactionValues(float amount) {
+        this.amount = amount;
     }
 
-    public static TransactionValues getInstance(Double... data) {
-        if (data.length == NUMBER_OF_FIELDS_IN_TRANSACTION_VALUES) {
-            return new TransactionValues(data);
-        }
-        throw new IllegalArgumentException("Exceeds number of fields in schema, number of fields expected: " + NUMBER_OF_FIELDS_IN_TRANSACTION_VALUES
-                + " you introduced: " + data.length);
+    public static TransactionValues getInstance(float amount) {
+        return new TransactionValues(amount);
     }
 
     public double getAmountTraded(){
-        return data[FIELD_AMOUNT_TRADED_POS];
+        return amount;
     }
     public double getAbsAmountTraded(){
-        return StrictMath.abs(data[FIELD_AMOUNT_TRADED_POS]);
+        return StrictMath.abs(amount);
     }
 
+    @Override
+    public int length() {
+        return NUMBER_OF_FIELDS_IN_TRANSACTION_VALUES;
+    }
 }
 

@@ -42,4 +42,9 @@ public class TransactionPK extends PrimaryKey {
     public int compareTo(PrimaryKey o) {
         return 0;
     }
+
+    @Override
+    public int length() {
+        return NUMBER_OF_FIELDS_IN_PRIMARY_KEY;
+    }
 }

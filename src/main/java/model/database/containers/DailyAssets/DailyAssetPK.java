@@ -88,4 +88,9 @@ public class DailyAssetPK extends PrimaryKey {
     public void setCurrentComparisonMode(int currentComparisonMode) {
         this.currentComparisonMode = currentComparisonMode;
     }
+
+    @Override
+    public int length() {
+        return NUMBER_OF_FIELDS_IN_PK;
+    }
 }

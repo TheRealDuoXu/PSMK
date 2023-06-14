@@ -2,11 +2,11 @@ package model.database.dao;
 
 import model.database.SQLQuery;
 import model.database.containers.DailyAssets.*;
-import model.database.containers.Values;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Date;
+
 public class DailyAssetsDAO extends DAO {
     private static final int DAILY_ASSETS_VALUE_DATA_LENGTH = 7;
     private static final int TICKER_POS = 0;
@@ -33,14 +33,14 @@ public class DailyAssetsDAO extends DAO {
         return instance;
     }
 
-    public Values<String> getOneDailyAssetByPK(DailyAssetPK primaryKey) {
+    public DailyAssetValues getOneDailyAssetByPK(DailyAssetPK primaryKey) {
+        final int STOCK_EXCHANGE_POS = 0, TYPE_POS = 1, OPEN_POS = 2, HIGH_POS = 3, LOW_POS = 4, CLOSE_POS = 5, VOL_POS = 6;
+
         SQLQuery sql = SQLQuery.SELECT_DAILY_ASSETS_VALUES_BY_PKs;
         try (ResultSet resultSet = executeQuery(sql, primaryKey.getStrTicket(), primaryKey.getStrDate())) {
-            String[] values = new String[DAILY_ASSETS_VALUE_DATA_LENGTH];
-            for (int i = 0; i < DAILY_ASSETS_VALUE_DATA_LENGTH; i++) {
-                values[i] = resultSet.getString(i);
-            }
-            return DailyAssetValues.getInstance(values);
+            return DailyAssetValues.getInstance(resultSet.getString(STOCK_EXCHANGE_POS), resultSet.getString(TYPE_POS).charAt(0),
+                    resultSet.getDouble(OPEN_POS), resultSet.getDouble(HIGH_POS), resultSet.getDouble(LOW_POS), resultSet.getDouble(CLOSE_POS),
+                    resultSet.getDouble(VOL_POS));
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
@@ -75,11 +75,12 @@ public class DailyAssetsDAO extends DAO {
         return collectDailyAssets(bondHistoricalMap, ticker);
     }
 
-    public StockHistoricalMap getStockHistoricalMapBtwDates(String ticker, Date from, Date to){
+    public StockHistoricalMap getStockHistoricalMapBtwDates(String ticker, Date from, Date to) {
         StockHistoricalMap stockHistoricalMap = new StockHistoricalMap();
         return collectDailyAssetsBtwDates(stockHistoricalMap, ticker, from, to);
     }
-    public BondHistoricalMap getBondHistoricalMapBtwDates(String ticker, Date from, Date to){
+
+    public BondHistoricalMap getBondHistoricalMapBtwDates(String ticker, Date from, Date to) {
         BondHistoricalMap bondHistoricalMap = new BondHistoricalMap();
         return collectDailyAssetsBtwDates(bondHistoricalMap, ticker, from, to);
     }
@@ -99,6 +100,7 @@ public class DailyAssetsDAO extends DAO {
             throw new RuntimeException(e);
         }
     }
+
     private <ContainerType extends InvestmentHistoricalMap> ContainerType collectDailyAssetsBtwDates
             (ContainerType container, String ticker, Date from, Date to) {
         SQLQuery sql = SQLQuery.SELECT_DAILY_ASSET_BTW_DATES;
@@ -126,28 +128,29 @@ public class DailyAssetsDAO extends DAO {
 
             values = DailyAssetValues.getInstance(
                     resultSet.getString(STOCK_EXCHANGE_POS),
-                    resultSet.getString(TYPE_POS),
-                    resultSet.getString(OPEN_POS),
-                    resultSet.getString(HIGH_POS),
-                    resultSet.getString(LOW_POS),
-                    resultSet.getString(CLOSE_POS),
-                    resultSet.getString(VOL_POS));
+                    resultSet.getString(TYPE_POS).charAt(0),
+                    resultSet.getDouble(OPEN_POS),
+                    resultSet.getDouble(HIGH_POS),
+                    resultSet.getDouble(LOW_POS),
+                    resultSet.getDouble(CLOSE_POS),
+                    resultSet.getDouble(VOL_POS));
 
             container.put(key, values);
         }
         return container;
     }
-    private void ensureDataIntegrity(String assetType, AssetDescription.AssetType type) throws ClassCastException{
-        if (assetType.charAt(0) != type.chr()){
+
+    private void ensureDataIntegrity(String assetType, AssetDescription.AssetType type) throws ClassCastException {
+        if (assetType.charAt(0) != type.chr()) {
             throw new ClassCastException("Asset type does not match: " + assetType + " vs " + type.name());
         }
     }
 
-    public void insertDailyAssetFromCSV(){
+    public void insertDailyAssetFromCSV() {
 
     }
 
-    public void insertDailyAssetFromDirectory(){
+    public void insertDailyAssetFromDirectory() {
 
     }
 }

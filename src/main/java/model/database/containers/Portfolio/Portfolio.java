@@ -71,6 +71,14 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
         return tmpMap;
     }
 
+    public PorfolioDescription getPorfolioDescription() {
+        return porfolioDescription;
+    }
+
+    public void setPorfolioDescription(PorfolioDescription porfolioDescription) {
+        this.porfolioDescription = porfolioDescription;
+    }
+
     /**
      * Orders Portfolios based on amount invested
      *

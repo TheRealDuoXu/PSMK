@@ -14,6 +14,8 @@ public abstract class PrimaryKey implements Comparable<PrimaryKey> {
         }
     }
 
+    public abstract int length();
+
     public final static class Ticker implements Comparable<Ticker> {
         private final static int MAX_TICKER_VARCHAR_LENGTH = 10;
         private String ticker;

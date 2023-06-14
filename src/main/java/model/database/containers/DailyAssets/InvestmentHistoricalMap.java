@@ -1,4 +1,5 @@
 package model.database.containers.DailyAssets;
+
 import model.database.containers.Values;
 
 import java.io.BufferedWriter;
@@ -7,7 +8,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Function;
 
-public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHistoricalMap>, Map<Date, Values<String>> {
+public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHistoricalMap>, Map<Date, DailyAssetValues> {
     /**
      * Represents any kind of historical data been treated in this programme
      */
@@ -31,13 +32,14 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     private final static int VALUES_POS_CLOSE = 5;
     private final static int VALUES_POS_VOL = 6;
     private static final short COL_DATE_LENGTH = 1;
-    LinkedHashMap<java.util.Date, Values<String>> map;
+    LinkedHashMap<Date, DailyAssetValues> map;
     AssetDescription assetDescription;
 
-    public InvestmentHistoricalMap(LinkedHashMap<java.util.Date, Values<String>> map) {
+    public InvestmentHistoricalMap(LinkedHashMap<Date, DailyAssetValues> map) {
         this.map = map;
     }
-    public InvestmentHistoricalMap(){
+
+    public InvestmentHistoricalMap() {
         this.map = new LinkedHashMap<>();
     }
 
@@ -67,19 +69,19 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     public String[][] toArray() {
-        Set<Map.Entry<Date, Values<String>>> entrySet = map.entrySet();
-        Iterator<Map.Entry<Date, Values<String>>> it = entrySet.iterator();
-        Map.Entry<Date, Values<String>> entry = it.next();
+        Set<Map.Entry<Date, DailyAssetValues>> entrySet = map.entrySet();
+        Iterator<Map.Entry<Date, DailyAssetValues>> it = entrySet.iterator();
+        Map.Entry<Date, DailyAssetValues> entry = it.next();
 
 
         int row_size = entrySet.size();
-        int col_size = entry.getValue().getData().length + COL_DATE_LENGTH;
+        int col_size = entry.getValue().length() + COL_DATE_LENGTH;
 
         String[][] strTable = new String[row_size][col_size];
 
         int i = 0;
         Date tmpKey;
-        Values<String> tmpValues;
+        DailyAssetValues tmpValues;
         while (it.hasNext()) {
             tmpKey = entry.getKey();
             tmpValues = entry.getValue();
@@ -95,27 +97,27 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
         return strTable;
     }
 
-    private void populateStrTableRow(DailyAssetPK tmpKey, Values<String> tmpValues, String[] nextRow) {
+    private void populateStrTableRow(DailyAssetPK tmpKey, DailyAssetValues tmpValues, String[] nextRow) {
         nextRow[ARRAY_POS_TICKER] = tmpKey.getStrTicket(); // Ticket
-        nextRow[ARRAY_POS_STOCK_EXCHANGE] = tmpValues.getData()[VALUES_POS_STOCK_EXCHANGE]; // Stock_exchange
-        nextRow[ARRAY_POS_TYPE] = tmpValues.getData()[VALUES_POS_TYPE]; // Type
+        nextRow[ARRAY_POS_STOCK_EXCHANGE] = tmpValues.getStockExchange();// Stock_exchange
+        nextRow[ARRAY_POS_TYPE] = String.valueOf(tmpValues.getType()); // Type
         nextRow[ARRAY_POS_DATE] = tmpKey.getStrDate(); // Date
-        nextRow[ARRAY_POS_OPEN] = tmpValues.getData()[VALUES_POS_OPEN]; // Open
-        nextRow[ARRAY_POS_HIGH] = tmpValues.getData()[VALUES_POS_HIGH]; // High
-        nextRow[ARRAY_POS_LOW] = tmpValues.getData()[VALUES_POS_LOW]; // Low
-        nextRow[ARRAY_POS_CLOSE] = tmpValues.getData()[VALUES_POS_CLOSE]; // Close
-        nextRow[ARRAY_POS_VOL] = tmpValues.getData()[VALUES_POS_VOL]; // Vol
+        nextRow[ARRAY_POS_OPEN] = String.valueOf(tmpValues.getOpen()); // Open
+        nextRow[ARRAY_POS_HIGH] = String.valueOf(tmpValues.getHigh()); // High
+        nextRow[ARRAY_POS_LOW] = String.valueOf(tmpValues.getLow()); // Low
+        nextRow[ARRAY_POS_CLOSE] = String.valueOf(tmpValues.getClose()); // Close
+        nextRow[ARRAY_POS_VOL] = String.valueOf(tmpValues.getVol()); // Vol
     }
 
     public String[] toFirstRowArray() {
-        Set<Map.Entry<Date, Values<String>>> entrySet = map.entrySet();
-        Iterator<Map.Entry<Date, Values<String>>> it = entrySet.iterator();
-        Map.Entry<Date, Values<String>> entry = it.next();
+        Set<Map.Entry<Date, DailyAssetValues>> entrySet = map.entrySet();
+        Iterator<Map.Entry<Date, DailyAssetValues>> it = entrySet.iterator();
+        Map.Entry<Date, DailyAssetValues> entry = it.next();
 
         DailyAssetPK tmpKey = new DailyAssetPK(assetDescription.getTicker(), entry.getKey());
-        Values<String> tmpValues = entry.getValue();
+        DailyAssetValues tmpValues = entry.getValue();
 
-        String[] firstRow = new String[DailyAssetPK.NUMBER_OF_FIELDS_IN_PK + tmpValues.getData().length];
+        String[] firstRow = new String[tmpKey.length() + tmpValues.length()];
 
         populateStrTableRow(tmpKey, tmpValues, firstRow);
 
@@ -155,22 +157,22 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     @Override
-    public Values<String> get(Object key) {
+    public DailyAssetValues get(Object key) {
         return map.get(key);
     }
 
     @Override
-    public Values<String> put(Date key, Values<String> value) {
-        return map.put(key,value);
+    public DailyAssetValues put(Date key, DailyAssetValues value) {
+        return map.put(key, value);
     }
 
     @Override
-    public Values<String> remove(Object key) {
+    public DailyAssetValues remove(Object key) {
         return map.remove(key);
     }
 
     @Override
-    public void putAll(Map<? extends Date, ? extends Values<String>> m) {
+    public void putAll(Map<? extends Date, ? extends DailyAssetValues> m) {
         map.putAll(m);
     }
 
@@ -185,12 +187,12 @@ public abstract class InvestmentHistoricalMap implements Comparable<InvestmentHi
     }
 
     @Override
-    public Collection<Values<String>> values() {
+    public Collection<DailyAssetValues> values() {
         return map.values();
     }
 
     @Override
-    public Set<Entry<Date, Values<String>>> entrySet() {
+    public Set<Entry<Date, DailyAssetValues>> entrySet() {
         return map.entrySet();
     }
 }
