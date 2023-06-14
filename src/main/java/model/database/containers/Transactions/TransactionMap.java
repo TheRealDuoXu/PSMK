@@ -2,6 +2,7 @@ package model.database.containers.Transactions;
 
 import model.database.containers.DailyAssets.AssetDescription;
 import model.database.containers.Inmutable;
+import model.database.containers.PrimaryKey;
 import model.database.dao.DailyAssetsDAO;
 
 import java.util.*;
@@ -85,10 +86,13 @@ public class TransactionMap extends OrderedDequeTransactionMap {
     }
 
     private void verifyTransactionMapHoldsSameAsset(TransactionPK.Ticker otherTicker) throws IllegalArgumentException {
-        if (isFirstRecordEntry()) return;
+        if (isCompatible(otherTicker)) return;
+        else throw new IllegalArgumentException();
+    }
 
-        if (!this.ticker.equals(otherTicker))
-            throw new IllegalArgumentException();
+    public boolean isCompatible(TransactionPK.Ticker ticker){
+        if (isFirstRecordEntry()) return true;
+        else return this.ticker.equals(ticker);
     }
 
     private boolean isFirstRecordEntry() {
