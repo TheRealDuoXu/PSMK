@@ -6,40 +6,35 @@ import model.database.dao.PortfolioDAO;
 
 import java.util.*;
 
-public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Comparable<Portfolio>{
+public class TransactionPortfolio implements Map<TransactionPK.Ticker, TransactionMap>, Comparable<TransactionPortfolio>{
     private static final int FIRST_OCCURRENCE = 0;
     private PorfolioDescription porfolioDescription;
     private LinkedHashMap<TransactionPK.Ticker, TransactionMap> portfolio;
     private Iterator<Entry<TransactionPK.Ticker, TransactionMap>> entryIterator;
 
-    public Portfolio(PorfolioDescription porfolioDescription, LinkedList<TransactionMap> transactionMapLinkedList) {
+    public TransactionPortfolio(PorfolioDescription porfolioDescription, LinkedList<TransactionMap> transactionMapLinkedList) {
         this.porfolioDescription = porfolioDescription;
         this.portfolio = initPortfolioFromTransactionMapList(transactionMapLinkedList);
     }
 
-    public Portfolio(PortfolioPK pk, LinkedList<TransactionMap> transactionMapLinkedList) {
+    public TransactionPortfolio(PortfolioPK pk, LinkedList<TransactionMap> transactionMapLinkedList) {
         this.portfolio = initPortfolioFromTransactionMapList(transactionMapLinkedList);
         this.porfolioDescription = getPortfolioDescription(pk);
     }
 
-    public Portfolio(PortfolioPK pk, TransactionMap... transactionMaps) {
+    public TransactionPortfolio(PortfolioPK pk, TransactionMap... transactionMaps) {
         this.portfolio = initPortfolioFromTransactionMapArray(transactionMaps);
         this.porfolioDescription = getPortfolioDescription(pk);
     }
 
-    public Portfolio(PortfolioPK pk, TransactionMap transactionMap) {
+    public TransactionPortfolio(PortfolioPK pk, TransactionMap transactionMap) {
         this.portfolio = initPortfolioFromTransactionMap(transactionMap);
         this.porfolioDescription = getPortfolioDescription(pk);
     }
 
-    public Portfolio(PortfolioPK pk) {
+    public TransactionPortfolio(PortfolioPK pk) {
         this.portfolio = new LinkedHashMap<>();
         this.porfolioDescription = getPortfolioDescription(pk);
-    }
-
-    private PorfolioDescription getPortfolioDescription(PortfolioPK pk) {
-        PortfolioDAO dao = PortfolioDAO.getInstance();
-        return dao.getPortfolioDescription(pk);
     }
 
     private LinkedHashMap<TransactionPK.Ticker, TransactionMap> initPortfolioFromTransactionMapList(LinkedList<TransactionMap> transactionMapLinkedList) {
@@ -70,11 +65,13 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
 
         return tmpMap;
     }
-
+    private PorfolioDescription getPortfolioDescription(PortfolioPK pk) {
+        PortfolioDAO dao = PortfolioDAO.getInstance();
+        return dao.getPortfolioDescription(pk);
+    }
     public PorfolioDescription getPorfolioDescription() {
         return porfolioDescription;
     }
-
     public void setPorfolioDescription(PorfolioDescription porfolioDescription) {
         this.porfolioDescription = porfolioDescription;
     }
@@ -86,7 +83,7 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
      * @return negative if other Portfolio is bigger than current Porfolio amount, and viceversa
      */
     @Override
-    public int compareTo(Portfolio o) {
+    public int compareTo(TransactionPortfolio o) {
         return (int) (this.porfolioDescription.getBudget() - o.porfolioDescription.getBudget());
     }
 
@@ -124,7 +121,6 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
     public TransactionMap remove(Object key) {
         return portfolio.remove(key);
     }
-
     @Override
     public void putAll(Map<? extends TransactionPK.Ticker, ? extends TransactionMap> m) {
         portfolio.putAll(m);
@@ -149,12 +145,6 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
     public Set<Entry<TransactionPK.Ticker, TransactionMap>> entrySet() {
         return portfolio.entrySet();
     }
-
-    @Override
-    public TransactionMap getOrDefault(Object key, TransactionMap defaultValue) {
-        return Map.super.getOrDefault(key, defaultValue);
-    }
-
     public void resetCursor() {
         this.entryIterator = this.portfolio.entrySet().iterator();
     }
@@ -162,26 +152,27 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
     public Entry<TransactionPK.Ticker, TransactionMap> nextEntry() {
         if (entryIterator == null) entryIterator = portfolio.entrySet().iterator();
 
-        if (!hasNextEntry()) throw new NullPointerException("No more entries on iterator");
+        if (hasNextEntry()) return entryIterator.next();
 
-        return entryIterator.next();
+        throw new NullPointerException("No more entries on iterator");
     }
     public TransactionPK.Ticker nextTicker(){
         if (entryIterator == null) entryIterator = portfolio.entrySet().iterator();
 
-        if (!hasNextEntry()) throw new NullPointerException("No more entries on iterator");
+        if (hasNextEntry()) return entryIterator.next().getKey();
 
-        return entryIterator.next().getKey();
+        throw new NullPointerException("No more entries on iterator");
     }
 
     public TransactionMap nextTransactionMap(){
         if (entryIterator == null) entryIterator = portfolio.entrySet().iterator();
 
-        if (!hasNextEntry()) throw new NullPointerException("No more entries on iterator");
+        if (hasNextEntry()) return entryIterator.next().getValue();
 
-        return entryIterator.next().getValue();
+        throw new NullPointerException("No more entries on iterator");
     }
     public boolean hasNextEntry() {
+        if (this.entryIterator == null) resetCursor();
         return entryIterator.hasNext();
     }
 }

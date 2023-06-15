@@ -5,7 +5,7 @@ import model.database.containers.User.UserDescription;
 import model.database.containers.User.UserPK;
 
 /**
- * Describes a {@link Portfolio}, does contain all parameters in table, as it accompanies portfolio class
+ * Describes a {@link TransactionPortfolio}, does contain all parameters in table, as it accompanies portfolio class
  * which is a Collection of TransactionMaps.
  * <p>
  * This description is mutable, as this can be edited by the user and then persisted

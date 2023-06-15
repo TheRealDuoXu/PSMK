@@ -40,7 +40,7 @@ public abstract class PrimaryKey implements Comparable<PrimaryKey> {
 
         @Override
         public String toString() {
-            return ticker;
+            return getTicker();
         }
 
         @Override

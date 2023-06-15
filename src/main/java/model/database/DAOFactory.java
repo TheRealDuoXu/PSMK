@@ -1,8 +1,6 @@
 package model.database;
 
-import model.database.dao.CSVFileDAO;
-import model.database.dao.DAO;
-import model.database.dao.TransactionsDAO;
+import model.database.dao.*;
 
 public class DAOFactory {
     private DAOFactory(){}
@@ -12,7 +10,7 @@ public class DAOFactory {
             case ELEMENT:
                 break;
             case PORTFOLIO:
-                break;
+                return PortfolioDAO.getInstance();
             case SIMULATION:
                 break;
             case TRANSACTION_REMAINDER:
@@ -20,9 +18,9 @@ public class DAOFactory {
             case TRANSACTIONS:
                 return TransactionsDAO.getInstance();
             case DAILY_ASSETS:
-                break;
+                return DailyAssetsDAO.getInstance();
             case USER:
-                break;
+                return UserDAO.getInstance();
             case USER_PREFERENCES:
                 break;
             default:

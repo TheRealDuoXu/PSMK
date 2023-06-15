@@ -106,6 +106,10 @@ public class TransactionMap extends OrderedDequeTransactionMap {
         return transactionDescription;
     }
 
+    public TransactionPK.Ticker getTicker() {
+        return ticker;
+    }
+
     @Override
     public int size() {
         return transactionRecord.size();

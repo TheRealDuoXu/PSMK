@@ -14,6 +14,7 @@ public enum SQLQuery {
     SELECT_TRANSACTION_POINT("select amount from " + SQLTable.TRANSACTIONS + " " +
             "where FK_UUID_Portfolio = '?' and FK_Ticker_DailyAssets = '?' and FK_Date_DailyAssets = '?'", 3),
     CHECK_IF_USER_EXISTS("select login from " + SQLTable.USER + " where login = '?'", 1),
+    CHECK_IF_PORTFOLIO_HAS_TRANSACTIONS("select * from Transactions where FK_UUID_Portfolio = '?'", 1),
     SELECT_PORTFOLIO_BY_USER_UUID("select * from " + SQLTable.PORTFOLIO + " " +
             "where FK_UUID_user = '?'", 1),
     SELECT_DAILY_ASSETS_VALUES_BY_PKs("select Stock_exchange, Type, Open, High, Low, Close, Vol " +
@@ -21,9 +22,13 @@ public enum SQLQuery {
     SELECT_PORTFOLIO_DESCRIPTION_BY_UUID("select * from Portfolio where UUID = '?'", 1),
     SELECT_USER_BY_LOGIN_AND_PASSWORD("select UUID, name, surname, email from User where login = '?' and password = '?'" , 2),
 
-    INSERT_INTO_USER("insert into " + SQLTable.USER + "(UUID, login, password) values ('?', '?', '?')", 3),
+    INSERT_USER("insert into " + SQLTable.USER + "(UUID, login, password) values ('?', '?', '?')", 3),
     INSERT_DAILY_ASSET("insert into DailyAssets(Ticker, Stock_exchange, Type, Date, Open, High, Low, Close, Vol) " +
-            "values ('?','?','?','?','?','?','?','?','?')", 9);
+            "values ('?','?','?','?','?','?','?','?','?')", 9),
+    INSERT_TRANSACTION("insert into Transactions(FK_Ticker_DailyAssets, FK_Date_DailyAssets, FK_UUID_Portfolio, amount) VALUES ('?', '?', '?', '?')", 4),
+
+    DELETE_TRANSACTION_ENTRY("delete from Transactions where FK_UUID_Portfolio = '?' and FK_Date_DailyAssets = '?' and FK_Ticker_DailyAssets = '?'", 3),
+    DELETE_PORTFOLIO("delete from Portfolio where UUID = '?'", 1);
 
     final String rawSQL;
     private String parsedSQL;
