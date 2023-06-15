@@ -39,7 +39,7 @@ public class Portfolio implements Map<TransactionPK.Ticker, TransactionMap>, Com
 
     private PorfolioDescription getPortfolioDescription(PortfolioPK pk) {
         PortfolioDAO dao = PortfolioDAO.getInstance();
-        return dao.getPortfolioDescription(pk.getUUID());
+        return dao.getPortfolioDescription(pk);
     }
 
     private LinkedHashMap<TransactionPK.Ticker, TransactionMap> initPortfolioFromTransactionMapList(LinkedList<TransactionMap> transactionMapLinkedList) {
