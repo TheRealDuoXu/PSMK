@@ -9,17 +9,17 @@ public enum SQLQuery {
             "where FK_UUID_Portfolio = '?'", 1),
     SELECT_TRANSACTION_MAPS_ON_PORTFOLIO("select FK_Ticker_DailyAssets, FK_Date_DailyAssets, amount from " + SQLTable.TRANSACTIONS +
             " where FK_UUID_Portfolio = '?'", 1),
-    SELECT_TRANSACTION_HISTORY_BY_PORTFOLIO_AND_TICKER("select * from " + SQLTable.TRANSACTIONS + " " +
+    SELECT_TRANSACTION_MAPS_ON_PORTFOLIO_BY_TICKER("select FK_Date_DailyAssets, amount from " + SQLTable.TRANSACTIONS + " " +
             "where FK_UUID_Portfolio = '?' and FK_Ticker_DailyAssets = '?'", 2),
-    SELECT_TRANSACTION_POINT("select * from " + SQLTable.TRANSACTIONS + " " +
+    SELECT_TRANSACTION_POINT("select amount from " + SQLTable.TRANSACTIONS + " " +
             "where FK_UUID_Portfolio = '?' and FK_Ticker_DailyAssets = '?' and FK_Date_DailyAssets = '?'", 3),
-    SELECT_USER_BY_LOGIN("select * from " + SQLTable.USER + " where login = '?'", 1),
+    CHECK_IF_USER_EXISTS("select login from " + SQLTable.USER + " where login = '?'", 1),
     SELECT_PORTFOLIO_BY_USER_UUID("select * from " + SQLTable.PORTFOLIO + " " +
             "where FK_UUID_user = '?'", 1),
     SELECT_DAILY_ASSETS_VALUES_BY_PKs("select Stock_exchange, Type, Open, High, Low, Close, Vol " +
             "from DailyAssets where Ticker='?' and Date='?'", 2),
     SELECT_PORTFOLIO_DESCRIPTION_BY_UUID("select * from Portfolio where UUID = '?'", 1),
-
+    SELECT_USER_BY_LOGIN_AND_PASSWORD("select UUID, name, surname, email from User where login = '?' and password = '?'" , 2),
 
     INSERT_INTO_USER("insert into " + SQLTable.USER + "(UUID, login, password) values ('?', '?', '?')", 3),
     INSERT_DAILY_ASSET("insert into DailyAssets(Ticker, Stock_exchange, Type, Date, Open, High, Low, Close, Vol) " +
